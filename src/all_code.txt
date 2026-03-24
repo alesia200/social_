@@ -1,0 +1,1700 @@
+﻿
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\config\SecurityConfig.java
+========================================
+
+package com.example.social.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                // Настройка доступа к страницам
+                .authorizeHttpRequests(authz -> authz
+                        // Разрешаем доступ к статике (css, js, картинки) и странице логина всем
+                        .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
+
+                        // Доступ к админке только у ADMIN
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                        // Доступ к управлению детьми и расписанием у Соц. работника и Админа
+                        .requestMatchers("/children/create", "/children/save", "/children/update/**", "/children/delete/**").hasAnyRole("ADMIN", "SOCIAL_WORKER")
+                        .requestMatchers("/sessions/create", "/sessions/save").hasAnyRole("ADMIN", "SOCIAL_WORKER")
+
+                        // Все остальные запросы требуют авторизации
+                        .anyRequest().authenticated()
+                )
+                // Настройка формы входа
+                .formLogin(form -> form
+                        .loginPage("/login") // Адрес страницы входа
+                        .defaultSuccessUrl("/", true) // Куда перекинуть после успешного входа
+                        .permitAll()
+                )
+                // Настройка выхода
+                .logout(logout -> logout
+                        .logoutSuccessUrl("/login?logout") // Куда перекинуть после выхода
+                        .permitAll()
+                );
+
+        return http.build();
+    }
+
+    // Бин для шифрования паролей
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\controller\ChildController.java
+========================================
+
+package com.example.social.controller;
+
+import com.example.social.model.Child;
+import com.example.social.model.DisabilityInfo;
+import com.example.social.service.ChildService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+@Controller
+@RequestMapping("/children")
+public class ChildController {
+
+    private final ChildService childService;
+
+    @Autowired
+    public ChildController(ChildService childService) {
+        this.childService = childService;
+    }
+
+    @GetMapping
+    public String findAll(Model model) {
+        model.addAttribute("children", childService.findAll());
+        return "child-list";
+    }
+
+    @GetMapping("/{id}")
+    public String findById(@PathVariable("id") Long id, Model model) {
+        Child child = childService.findById(id);
+        model.addAttribute("child", child);
+        return "child-profile"; // Убедитесь, что файл child-profile.html существует
+    }
+
+    @GetMapping("/create")
+    public String createChildForm(Model model) {
+        Child child = new Child();
+        // Инициализируем пустой объект, чтобы форма работала корректно
+        child.setDisabilityInfo(new DisabilityInfo());
+        model.addAttribute("child", child);
+        return "child-form";
+    }
+
+    // ИСПРАВЛЕННЫЙ МЕТОД СОХРАНЕНИЯ
+    // Мы убрали MultipartFile и логику сохранения файлов, так как в новом ТЗ нет поля для пути к файлу
+    @PostMapping("/save")
+    public String saveChild(Child child) {
+
+        // Если у ребенка еще нет инфо об инвалидности (на всякий случай), создаем объект
+        if (child.getDisabilityInfo() == null) {
+            child.setDisabilityInfo(new DisabilityInfo());
+        }
+
+        childService.save(child);
+        return "redirect:/children";
+    }
+
+    @GetMapping("/update/{id}")
+    public String updateChildForm(@PathVariable("id") Long id, Model model) {
+        Child child = childService.findById(id);
+        model.addAttribute("child", child);
+        return "child-form";
+    }
+
+    @GetMapping("/delete/{id}")
+    public String deleteChild(@PathVariable("id") Long id) {
+        childService.delete(id);
+        return "redirect:/children";
+    }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\controller\ClassSessionController.java
+========================================
+
+package com.example.social.controller;
+
+import com.example.social.model.ClassSession;
+import com.example.social.model.User;
+import com.example.social.service.ClassSessionService;
+import com.example.social.service.ChildService;
+import com.example.social.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+@Controller
+@RequestMapping("/sessions") // Базовый URL для занятий
+public class ClassSessionController {
+
+    private final ClassSessionService sessionService;
+    private final ChildService childService;
+    private final UserService userService;
+
+    @Autowired
+    public ClassSessionController(ClassSessionService sessionService, ChildService childService, UserService userService) {
+        this.sessionService = sessionService;
+        this.childService = childService;
+        this.userService = userService;
+    }
+
+    // 1. Показать полное расписание (для Соц. работника)
+    @GetMapping
+    public String findAllSessions(Model model) {
+        model.addAttribute("sessions", sessionService.findAll());
+        return "session-list";
+    }
+
+    // 2. Показать форму создания занятия
+    // Соц. работник выбирает ребенка и дефектолога
+    @GetMapping("/create")
+    public String createSessionForm(Model model) {
+        model.addAttribute("session", new ClassSession());
+        // Передаем списки детей и пользователей для выпадающих списков
+        model.addAttribute("children", childService.findAll());
+        model.addAttribute("users", userService.findAll());
+        return "session-form";
+    }
+
+    // 3. Сохранить занятие (создать запись в журнале/расписании)
+    @PostMapping("/save")
+    public String saveSession(ClassSession session) {
+        sessionService.save(session);
+        return "redirect:/sessions";
+    }
+
+    // 4. Показать журнал конкретного ребенка
+    // Доступно: Дефектолог, Соц. работник
+    @GetMapping("/child/{childId}")
+    public String findSessionsByChild(@PathVariable("childId") Long childId, Model model) {
+        model.addAttribute("sessions", sessionService.findByChildId(childId));
+        model.addAttribute("child", childService.findById(childId));
+        return "child-journal"; // Отдельная страница журнала
+    }
+
+    // 5. Показать расписание конкретного дефектолога
+    // Доступно: Дефектолог
+    @GetMapping("/defectologist/{userId}")
+    public String findSessionsByDefectologist(@PathVariable("userId") Long userId, Model model) {
+        model.addAttribute("sessions", sessionService.findByDefectologistId(userId));
+        model.addAttribute("user", userService.findById(userId));
+        return "defectologist-schedule";
+    }
+
+    // 6. Форма редактирования/заполнения журнала
+    // Дефектолог проставляет статус и примечания
+    @GetMapping("/update/{id}")
+    public String updateSessionForm(@PathVariable("id") Long id, Model model) {
+        ClassSession session = sessionService.findById(id);
+        model.addAttribute("session", session);
+        return "session-update"; // Форма обновления статуса
+    }
+
+    // 7. Удалить занятие
+    @GetMapping("/delete/{id}")
+    public String deleteSession(@PathVariable("id") Long id) {
+        sessionService.delete(id);
+        return "redirect:/sessions";
+    }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\controller\HomeController.java
+========================================
+
+package com.example.social.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+
+@Controller
+public class HomeController {
+
+    // Главная страница
+    @GetMapping("/")
+    public String home() {
+        return "home";
+    }
+
+    // Страница входа (ВАЖНО! Без этого метода будет ошибка переадресации)
+    @GetMapping("/login")
+    public String login() {
+        return "login";
+    }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\controller\UserController.java
+========================================
+
+package com.example.social.controller;
+
+import com.example.social.model.User;
+import com.example.social.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+@Controller
+@RequestMapping("/admin/users") // Все методы этого контроллера будут начинаться с /admin/users
+public class UserController {
+
+    private final UserService userService;
+
+    @Autowired
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    // 1. Показать список всех пользователей
+    @GetMapping
+    public String findAll(Model model) {
+        model.addAttribute("users", userService.findAll());
+        return "user-list"; // имя HTML файла, который мы создадим позже
+    }
+
+    // 2. Показать форму создания пользователя
+    @GetMapping("/create")
+    public String createUserForm(Model model) {
+        model.addAttribute("user", new User()); // Создаем пустой объект для формы
+        return "user-form"; // имя HTML файла
+    }
+
+    // 3. Сохранить пользователя (админ создает нового)
+    @PostMapping("/save")
+    public String saveUser(User user) {
+        // ВАЖНО: В реальном приложении здесь нужно шифровать пароль!
+        // Пока сохраняем как есть.
+        userService.save(user);
+        return "redirect:/admin/users"; // Перенаправление обратно к списку
+    }
+
+    // 4. Удалить пользователя
+    @GetMapping("/delete/{id}")
+    public String deleteUser(@PathVariable("id") Long id) {
+        userService.delete(id);
+        return "redirect:/admin/users";
+    }
+
+    // 5. Показать форму редактирования
+    @GetMapping("/update/{id}")
+    public String updateUserForm(@PathVariable("id") Long id, Model model) {
+        User user = userService.findById(id);
+        model.addAttribute("user", user);
+        return "user-form";
+    }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\model\Child.java
+========================================
+
+package com.example.social.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.util.List;
+
+@Entity
+@Table(name = "children")
+public class Child {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID_child")
+    private Long id;
+
+    @Column(name = "surname", length = 100, nullable = false)
+    private String surname;
+
+    @Column(name = "name", length = 100, nullable = false)
+    private String name;
+
+    @Column(name = "patronymic", length = 100)
+    private String patronymic;
+
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
+    @Column(name = "gender", length = 10)
+    private String gender;
+
+    @Column(name = "snils", length = 14)
+    private String snils;
+
+    @Column(name = "actual_address", length = 500)
+    private String actualAddress;
+
+    @Column(name = "registration_address", length = 500)
+    private String registrationAddress;
+
+    @Column(name = "doc_series", length = 10)
+    private String docSeries;
+
+    @Column(name = "doc_number", length = 20)
+    private String docNumber;
+
+    @Column(name = "representative_phone", length = 20)
+    private String representativePhone;
+
+    @Column(name = "representative_relation", length = 20)
+    private String representativeRelation;
+
+    @Column(name = "representative_fio", length = 100)
+    private String representativeFio;
+
+    // Связи
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "ID_disability_info")
+    private DisabilityInfo disabilityInfo;
+
+    @OneToMany(mappedBy = "child", cascade = CascadeType.ALL)
+    private List<ClassSession> sessions;
+
+    @OneToMany(mappedBy = "child", cascade = CascadeType.ALL)
+    private List<RehabilitationCourse> courses;
+
+    // --- Геттеры и сеттеры ---
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getSurname() { return surname; }
+    public void setSurname(String surname) { this.surname = surname; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getPatronymic() { return patronymic; }
+    public void setPatronymic(String patronymic) { this.patronymic = patronymic; }
+    public LocalDate getBirthDate() { return birthDate; }
+    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+    public String getSnils() { return snils; }
+    public void setSnils(String snils) { this.snils = snils; }
+    public String getActualAddress() { return actualAddress; }
+    public void setActualAddress(String actualAddress) { this.actualAddress = actualAddress; }
+    public String getRegistrationAddress() { return registrationAddress; }
+    public void setRegistrationAddress(String registrationAddress) { this.registrationAddress = registrationAddress; }
+    public String getDocSeries() { return docSeries; }
+    public void setDocSeries(String docSeries) { this.docSeries = docSeries; }
+    public String getDocNumber() { return docNumber; }
+    public void setDocNumber(String docNumber) { this.docNumber = docNumber; }
+    public String getRepresentativePhone() { return representativePhone; }
+    public void setRepresentativePhone(String representativePhone) { this.representativePhone = representativePhone; }
+    public String getRepresentativeRelation() { return representativeRelation; }
+    public void setRepresentativeRelation(String representativeRelation) { this.representativeRelation = representativeRelation; }
+    public String getRepresentativeFio() { return representativeFio; }
+    public void setRepresentativeFio(String representativeFio) { this.representativeFio = representativeFio; }
+    public DisabilityInfo getDisabilityInfo() { return disabilityInfo; }
+    public void setDisabilityInfo(DisabilityInfo disabilityInfo) { this.disabilityInfo = disabilityInfo; }
+    public List<ClassSession> getSessions() { return sessions; }
+    public void setSessions(List<ClassSession> sessions) { this.sessions = sessions; }
+    public List<RehabilitationCourse> getCourses() { return courses; }
+    public void setCourses(List<RehabilitationCourse> courses) { this.courses = courses; }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\model\ClassSession.java
+========================================
+
+package com.example.social.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+@Entity
+@Table(name = "class_sessions")
+public class ClassSession {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID_session")
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "ID_service_plan")
+    private ServicePlan servicePlan;
+
+    @ManyToOne
+    @JoinColumn(name = "ID_child")
+    private Child child;
+
+    @ManyToOne
+    @JoinColumn(name = "ID_specialist")
+    private User defectologist;
+
+    @Column(name = "session_date")
+    private LocalDate sessionDate;
+
+    @Column(name = "start_time")
+    private LocalTime startTime;
+
+    @Column(name = "status", length = 20)
+    private String status;
+
+    @Column(name = "topic_theme", length = 255)
+    private String topicTheme;
+
+    @Column(name = "goals", length = 500)
+    private String goals;
+
+    @Column(name = "specialist_notes", columnDefinition = "TEXT")
+    private String specialistNotes;
+
+    // --- Геттеры и сеттеры ---
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public ServicePlan getServicePlan() { return servicePlan; }
+    public void setServicePlan(ServicePlan servicePlan) { this.servicePlan = servicePlan; }
+    public Child getChild() { return child; }
+    public void setChild(Child child) { this.child = child; }
+    public User getDefectologist() { return defectologist; }
+    public void setDefectologist(User defectologist) { this.defectologist = defectologist; }
+    public LocalDate getSessionDate() { return sessionDate; }
+    public void setSessionDate(LocalDate sessionDate) { this.sessionDate = sessionDate; }
+    public LocalTime getStartTime() { return startTime; }
+    public void setStartTime(LocalTime startTime) { this.startTime = startTime; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public String getTopicTheme() { return topicTheme; }
+    public void setTopicTheme(String topicTheme) { this.topicTheme = topicTheme; }
+    public String getGoals() { return goals; }
+    public void setGoals(String goals) { this.goals = goals; }
+    public String getSpecialistNotes() { return specialistNotes; }
+    public void setSpecialistNotes(String specialistNotes) { this.specialistNotes = specialistNotes; }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\model\DiagnosticProtocol.java
+========================================
+
+package com.example.social.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.util.List;
+
+@Entity
+@Table(name = "diagnostic_protocols")
+public class DiagnosticProtocol {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID_protocol")
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "ID_rehab_course")
+    private RehabilitationCourse rehabCourse;
+
+    @Column(name = "diagnostic_type", length = 20)
+    private String diagnosticType;
+
+    @Column(name = "assessment_date")
+    private LocalDate assessmentDate;
+
+    @Column(name = "total_score")
+    private Integer totalScore;
+
+    @Column(name = "effectiveness_percentage")
+    private Integer effectivenessPercentage;
+
+    @OneToMany(mappedBy = "protocol", cascade = CascadeType.ALL)
+    private List<IcfAssessment> assessments;
+
+    // --- Геттеры и сеттеры ---
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public RehabilitationCourse getRehabCourse() { return rehabCourse; }
+    public void setRehabCourse(RehabilitationCourse rehabCourse) { this.rehabCourse = rehabCourse; }
+    public String getDiagnosticType() { return diagnosticType; }
+    public void setDiagnosticType(String diagnosticType) { this.diagnosticType = diagnosticType; }
+    public LocalDate getAssessmentDate() { return assessmentDate; }
+    public void setAssessmentDate(LocalDate assessmentDate) { this.assessmentDate = assessmentDate; }
+    public Integer getTotalScore() { return totalScore; }
+    public void setTotalScore(Integer totalScore) { this.totalScore = totalScore; }
+    public Integer getEffectivenessPercentage() { return effectivenessPercentage; }
+    public void setEffectivenessPercentage(Integer effectivenessPercentage) { this.effectivenessPercentage = effectivenessPercentage; }
+    public List<IcfAssessment> getAssessments() { return assessments; }
+    public void setAssessments(List<IcfAssessment> assessments) { this.assessments = assessments; }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\model\DisabilityInfo.java
+========================================
+
+package com.example.social.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.util.List;
+
+@Entity
+@Table(name = "disability_info")
+public class DisabilityInfo {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID_disability_info")
+    private Long id;
+
+    @Column(name = "disability_group", length = 50)
+    private String disabilityGroup;
+
+    @Column(name = "is_first_time")
+    private Boolean isFirstTime;
+
+    @Column(name = "establishment_date")
+    private LocalDate establishmentDate;
+
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
+
+    @Column(name = "cause", length = 255)
+    private String cause;
+
+    @Column(name = "ipra_number", length = 50)
+    private String ipraNumber;
+
+    @Column(name = "ipra_expiry_date")
+    private LocalDate ipraExpiryDate;
+
+    @Column(name = "rehab_potential", length = 50)
+    private String rehabPotential;
+
+    @Column(name = "rehab_prognosis", length = 50)
+    private String rehabPrognosis;
+
+    @Column(name = "is_palliative")
+    private Boolean isPalliative;
+
+    // Связь с ограничениями
+    @OneToMany(mappedBy = "disabilityInfo", cascade = CascadeType.ALL)
+    private List<Limitation> limitations;
+
+    // --- Геттеры и сеттеры ---
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getDisabilityGroup() { return disabilityGroup; }
+    public void setDisabilityGroup(String disabilityGroup) { this.disabilityGroup = disabilityGroup; }
+    public Boolean getIsFirstTime() { return isFirstTime; }
+    public void setIsFirstTime(Boolean isFirstTime) { this.isFirstTime = isFirstTime; }
+    public LocalDate getEstablishmentDate() { return establishmentDate; }
+    public void setEstablishmentDate(LocalDate establishmentDate) { this.establishmentDate = establishmentDate; }
+    public LocalDate getExpiryDate() { return expiryDate; }
+    public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
+    public String getCause() { return cause; }
+    public void setCause(String cause) { this.cause = cause; }
+    public String getIpraNumber() { return ipraNumber; }
+    public void setIpraNumber(String ipraNumber) { this.ipraNumber = ipraNumber; }
+    public LocalDate getIpraExpiryDate() { return ipraExpiryDate; }
+    public void setIpraExpiryDate(LocalDate ipraExpiryDate) { this.ipraExpiryDate = ipraExpiryDate; }
+    public String getRehabPotential() { return rehabPotential; }
+    public void setRehabPotential(String rehabPotential) { this.rehabPotential = rehabPotential; }
+    public String getRehabPrognosis() { return rehabPrognosis; }
+    public void setRehabPrognosis(String rehabPrognosis) { this.rehabPrognosis = rehabPrognosis; }
+    public Boolean getIsPalliative() { return isPalliative; }
+    public void setIsPalliative(Boolean isPalliative) { this.isPalliative = isPalliative; }
+    public List<Limitation> getLimitations() { return limitations; }
+    public void setLimitations(List<Limitation> limitations) { this.limitations = limitations; }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\model\IcfAssessment.java
+========================================
+
+package com.example.social.model;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "icf_assessments")
+public class IcfAssessment {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID_Assessment")
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "ID_protocol")
+    private DiagnosticProtocol protocol;
+
+    @ManyToOne
+    @JoinColumn(name = "ID_category")
+    private IcfCategory icfCategory;
+
+    @Column(name = "score")
+    private Integer score;
+
+    // --- Геттеры и сеттеры ---
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public DiagnosticProtocol getProtocol() { return protocol; }
+    public void setProtocol(DiagnosticProtocol protocol) { this.protocol = protocol; }
+    public IcfCategory getIcfCategory() { return icfCategory; }
+    public void setIcfCategory(IcfCategory icfCategory) { this.icfCategory = icfCategory; }
+    public Integer getScore() { return score; }
+    public void setScore(Integer score) { this.score = score; }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\model\IcfCategory.java
+========================================
+
+package com.example.social.model;
+
+import jakarta.persistence.*;
+import java.util.List;
+
+@Entity
+@Table(name = "icf_categories")
+public class IcfCategory {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID_category")
+    private Long id;
+
+    @Column(name = "code_MKF", length = 10)
+    private String codeMKF;
+
+    @Column(name = "name", length = 255)
+    private String name;
+
+    @Column(name = "is_age_0_3")
+    private Boolean isAge03;
+
+    @Column(name = "is_age_4_7")
+    private Boolean isAge47;
+
+    @Column(name = "is_age_8_11")
+    private Boolean isAge811;
+
+    @Column(name = "is_age_12_17")
+    private Boolean isAge1217;
+
+    @OneToMany(mappedBy = "icfCategory")
+    private List<IcfAssessment> assessments;
+
+    // --- Геттеры и сеттеры ---
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getCodeMKF() { return codeMKF; }
+    public void setCodeMKF(String codeMKF) { this.codeMKF = codeMKF; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Boolean getIsAge03() { return isAge03; }
+    public void setIsAge03(Boolean isAge03) { this.isAge03 = isAge03; }
+    public Boolean getIsAge47() { return isAge47; }
+    public void setIsAge47(Boolean isAge47) { this.isAge47 = isAge47; }
+    public Boolean getIsAge811() { return isAge811; }
+    public void setIsAge811(Boolean isAge811) { this.isAge811 = isAge811; }
+    public Boolean getIsAge1217() { return isAge1217; }
+    public void setIsAge1217(Boolean isAge1217) { this.isAge1217 = isAge1217; }
+    public List<IcfAssessment> getAssessments() { return assessments; }
+    public void setAssessments(List<IcfAssessment> assessments) { this.assessments = assessments; }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\model\Limitation.java
+========================================
+
+package com.example.social.model;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "limitations")
+public class Limitation {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID_limitation")
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "ID_disability_info")
+    private DisabilityInfo disabilityInfo;
+
+    @Column(name = "category_name", length = 255)
+    private String categoryName;
+
+    @Column(name = "degree")
+    private Integer degree;
+
+    // --- Геттеры и сеттеры ---
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public DisabilityInfo getDisabilityInfo() { return disabilityInfo; }
+    public void setDisabilityInfo(DisabilityInfo disabilityInfo) { this.disabilityInfo = disabilityInfo; }
+    public String getCategoryName() { return categoryName; }
+    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
+    public Integer getDegree() { return degree; }
+    public void setDegree(Integer degree) { this.degree = degree; }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\model\RehabilitationCourse.java
+========================================
+
+package com.example.social.model;
+
+import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+
+@Entity
+@Table(name = "rehabilitation_courses")
+public class RehabilitationCourse {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID_rehab_course")
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "ID_child")
+    private Child child;
+
+    @Column(name = "start_date")
+    private LocalDate startDate;
+
+    @Column(name = "end_date")
+    private LocalDate endDate;
+
+    @Column(name = "contract_number", length = 50)
+    private String contractNumber;
+
+    @Column(name = "status", length = 20)
+    private String status;
+
+    @Column(name = "effectiveness_percentage", precision = 5, scale = 2)
+    private BigDecimal effectivenessPercentage;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "ID_protocol")
+    private DiagnosticProtocol diagnosticProtocol;
+
+    @OneToMany(mappedBy = "rehabCourse", cascade = CascadeType.ALL)
+    private List<ServicePlan> servicePlans;
+
+    // --- Геттеры и сеттеры ---
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Child getChild() { return child; }
+    public void setChild(Child child) { this.child = child; }
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+    public String getContractNumber() { return contractNumber; }
+    public void setContractNumber(String contractNumber) { this.contractNumber = contractNumber; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public BigDecimal getEffectivenessPercentage() { return effectivenessPercentage; }
+    public void setEffectivenessPercentage(BigDecimal effectivenessPercentage) { this.effectivenessPercentage = effectivenessPercentage; }
+    public DiagnosticProtocol getDiagnosticProtocol() { return diagnosticProtocol; }
+    public void setDiagnosticProtocol(DiagnosticProtocol diagnosticProtocol) { this.diagnosticProtocol = diagnosticProtocol; }
+    public List<ServicePlan> getServicePlans() { return servicePlans; }
+    public void setServicePlans(List<ServicePlan> servicePlans) { this.servicePlans = servicePlans; }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\model\Role.java
+========================================
+
+package com.example.social.model;
+
+public enum Role {
+    ADMIN,          // Администратор
+    SOCIAL_WORKER,  // Социальный работник
+    DEFECTOLOGIST   // Дефектолог
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\model\ServicePlan.java
+========================================
+
+package com.example.social.model;
+
+import jakarta.persistence.*;
+import java.util.List;
+
+@Entity
+@Table(name = "service_plans")
+public class ServicePlan {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID_service_plan")
+    private Long id;
+
+    @Column(name = "service_direction", length = 100)
+    private String serviceDirection;
+
+    @ManyToOne
+    @JoinColumn(name = "ID_rehab_course")
+    private RehabilitationCourse rehabCourse;
+
+    @Column(name = "planned_quantity")
+    private Integer plannedQuantity;
+
+    @Column(name = "executed_quantity")
+    private Integer executedQuantity;
+
+    @OneToMany(mappedBy = "servicePlan")
+    private List<ClassSession> sessions;
+
+    // --- Геттеры и сеттеры ---
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getServiceDirection() { return serviceDirection; }
+    public void setServiceDirection(String serviceDirection) { this.serviceDirection = serviceDirection; }
+    public RehabilitationCourse getRehabCourse() { return rehabCourse; }
+    public void setRehabCourse(RehabilitationCourse rehabCourse) { this.rehabCourse = rehabCourse; }
+    public Integer getPlannedQuantity() { return plannedQuantity; }
+    public void setPlannedQuantity(Integer plannedQuantity) { this.plannedQuantity = plannedQuantity; }
+    public Integer getExecutedQuantity() { return executedQuantity; }
+    public void setExecutedQuantity(Integer executedQuantity) { this.executedQuantity = executedQuantity; }
+    public List<ClassSession> getSessions() { return sessions; }
+    public void setSessions(List<ClassSession> sessions) { this.sessions = sessions; }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\model\User.java
+========================================
+
+package com.example.social.model;
+
+import jakarta.persistence.*;
+import java.util.List;
+
+@Entity
+@Table(name = "users")
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID_user")
+    private Long id;
+
+    @Column(name = "username", length = 100, nullable = false, unique = true)
+    private String username;
+
+    @Column(name = "password", length = 255, nullable = false)
+    private String password;
+
+    @Column(name = "full_name", length = 255)
+    private String fullName; // Заменили отдельные поля фамилии/имени на одно поле ФИО по ТЗ
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", length = 20, nullable = false)
+    private Role role;
+
+    @Column(name = "position", length = 100)
+    private String position;
+
+    // Связи
+    @OneToMany(mappedBy = "defectologist", cascade = CascadeType.ALL)
+    private List<ClassSession> sessions;
+
+    // --- Конструкторы ---
+    public User() {}
+
+    // --- Геттеры и сеттеры ---
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
+    public String getPosition() { return position; }
+    public void setPosition(String position) { this.position = position; }
+    public List<ClassSession> getSessions() { return sessions; }
+    public void setSessions(List<ClassSession> sessions) { this.sessions = sessions; }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\repository\ChildRepository.java
+========================================
+
+package com.example.social.repository;
+
+import com.example.social.model.Child;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ChildRepository extends JpaRepository<Child, Long> {
+    // JpaRepository уже содержит методы:
+    // save() - сохранить/обновить
+    // findAll() - найти всех
+    // findById() - найти по ID
+    // deleteById() - удалить по ID
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\repository\ClassSessionRepository.java
+========================================
+
+package com.example.social.repository;
+
+import com.example.social.model.ClassSession;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface ClassSessionRepository extends JpaRepository<ClassSession, Long> {
+
+    // Найти все занятия по ID ребенка
+    List<ClassSession> findByChildId(Long childId);
+
+    // Найти все занятия по ID дефектолога
+    List<ClassSession> findByDefectologistId(Long defectologistId);
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\repository\DiagnosticProtocolRepository.java
+========================================
+
+package com.example.social.repository;
+
+import com.example.social.model.DiagnosticProtocol;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface DiagnosticProtocolRepository extends JpaRepository<DiagnosticProtocol, Long> {
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\repository\DisabilityInfoRepository.java
+========================================
+
+package com.example.social.repository;
+
+import com.example.social.model.DisabilityInfo;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface DisabilityInfoRepository extends JpaRepository<DisabilityInfo, Long> {
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\repository\RehabilitationCourseRepository.java
+========================================
+
+package com.example.social.repository;
+
+import com.example.social.model.RehabilitationCourse;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface RehabilitationCourseRepository extends JpaRepository<RehabilitationCourse, Long> {
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\repository\UserRepository.java
+========================================
+
+package com.example.social.repository;
+
+import com.example.social.model.User;
+import org.springframework.data.jpa.repository.JpaRepository; // Эту строку IDEA добавит сама или через Alt+Enter
+import java.util.Optional;
+
+// Вот исправленная строка:
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    Optional<User> findByUsername(String username);
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\service\ChildService.java
+========================================
+
+package com.example.social.service;
+
+import com.example.social.model.Child;
+import com.example.social.repository.ChildRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class ChildService {
+
+    private final ChildRepository childRepository;
+
+    @Autowired
+    public ChildService(ChildRepository childRepository) {
+        this.childRepository = childRepository;
+    }
+
+    // Получить список всех детей (для Соц. работника и Дефектолога)
+    public List<Child> findAll() {
+        return childRepository.findAll();
+    }
+
+    // Найти ребенка по ID (для просмотра профиля)
+    public Child findById(Long id) {
+        return childRepository.findById(id).orElse(null);
+    }
+
+    // Сохранить или обновить профиль ребенка
+    // Благодаря каскадированию (CascadeType.ALL) в модели Child,
+    // при сохранении ребенка сохранятся и связанные DisabilityInfo
+    public void save(Child child) {
+        childRepository.save(child);
+    }
+
+    // Удалить профиль ребенка
+    public void delete(Long id) {
+        childRepository.deleteById(id);
+    }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\service\ClassSessionService.java
+========================================
+
+package com.example.social.service;
+
+import com.example.social.model.ClassSession;
+import com.example.social.repository.ClassSessionRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class ClassSessionService {
+
+    private final ClassSessionRepository classSessionRepository;
+
+    @Autowired
+    public ClassSessionService(ClassSessionRepository classSessionRepository) {
+        this.classSessionRepository = classSessionRepository;
+    }
+
+    // Получить все занятия (полное расписание)
+    public List<ClassSession> findAll() {
+        return classSessionRepository.findAll();
+    }
+
+    // Найти занятие по ID
+    public ClassSession findById(Long id) {
+        return classSessionRepository.findById(id).orElse(null);
+    }
+
+    // Сохранить/обновить занятие
+    public void save(ClassSession classSession) {
+        classSessionRepository.save(classSession);
+    }
+
+    // Удалить занятие
+    public void delete(Long id) {
+        classSessionRepository.deleteById(id);
+    }
+
+    // Получить занятия конкретного ребенка (Журнал ребенка)
+    public List<ClassSession> findByChildId(Long childId) {
+        // Этот метод мы сейчас добавим в репозиторий
+        return classSessionRepository.findByChildId(childId);
+    }
+
+    // Получить занятия конкретного дефектолога (Расписание дефектолога)
+    public List<ClassSession> findByDefectologistId(Long defectologistId) {
+        // Этот метод мы сейчас добавим в репозиторий
+        return classSessionRepository.findByDefectologistId(defectologistId);
+    }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\service\UserService.java
+========================================
+
+package com.example.social.service;
+
+import com.example.social.model.User;
+import com.example.social.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+// Имплементируем UserDetailsService для работы Spring Security
+public class UserService implements UserDetailsService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder; // Добавляем шифровальщик
+
+    @Autowired
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    // Метод, который Spring Security использует для поиска пользователя при логине
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        // Преобразуем нашего User в Spring Security User
+        return org.springframework.security.core.userdetails.User.builder()
+                .username(user.getUsername())
+                .password(user.getPassword()) // Пароль уже должен быть зашифрован в базе
+                .roles(user.getRole().name()) // Подставляем роль
+                .build();
+    }
+
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
+    public User findById(Long id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
+    // При сохранении шифруем пароль!
+    public void save(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        userRepository.save(user);
+    }
+
+    // Метод для обновления (чтобы не шифровать пароль каждый раз, если он не менялся)
+    public void update(User user) {
+        userRepository.save(user);
+    }
+
+    public void delete(Long id) {
+        userRepository.deleteById(id);
+    }
+
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+}
+
+
+========================================
+FILE: C:\social\src\main\java\com\example\social\SocialApplication.java
+========================================
+
+package com.example.social;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class SocialApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SocialApplication.class, args);
+	}
+
+}
+
+
+========================================
+FILE: C:\social\src\main\resources\templates\child-form.html
+========================================
+
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Форма ребенка</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">Реабилитационный Центр</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="card" style="max-width: 800px; margin: auto;">
+        <div class="card-header bg-info text-white">
+            <h4 th:if="${child.id == null}">Добавление профиля ребенка</h4>
+            <h4 th:if="${child.id != null}">Редактирование профиля</h4>
+        </div>
+        <div class="card-body">
+            <!-- ВАЖНО: добавлен enctype="multipart/form-data" -->
+            <form th:action="@{/children/save}" th:object="${child}" method="post" enctype="multipart/form-data">
+
+                <input type="hidden" th:field="*{id}" />
+                <input type="hidden" th:field="*{disabilityInfo.id}" />
+
+                <h5>Личные данные</h5>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label>Фамилия</label>
+                        <input type="text" th:field="*{surname}" class="form-control" required>
+                    </div>
+                    <div class="col">
+                        <label>Имя</label>
+                        <input type="text" th:field="*{name}" class="form-control" required>
+                    </div>
+                    <div class="col">
+                        <label>Отчество</label>
+                        <input type="text" th:field="*{patronymic}" class="form-control">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label>Дата рождения</label>
+                    <input type="date" th:field="*{dateOfBirth}" class="form-control">
+                </div>
+
+                <hr>
+                <h5>Информация об инвалидности</h5>
+
+                <div class="mb-3">
+                    <label>Группа инвалидности</label>
+                    <input type="text" th:field="*{disabilityInfo.disabilityGroup}" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>Заключение МСЭ</label>
+                    <textarea th:field="*{disabilityInfo.mseConclusion}" class="form-control" rows="2"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label>Дата справки МСЭ</label>
+                    <input type="date" th:field="*{disabilityInfo.mseDate}" class="form-control">
+                </div>
+
+                <!-- ПОЛЕ ЗАГРУЗКИ ФАЙЛА -->
+                <div class="mb-3">
+                    <label class="form-label">Документ ИПРА (PDF или изображение)</label>
+                    <!-- name="ipraFile" - это имя параметра в контроллере -->
+                    <input type="file" name="ipraFile" class="form-control">
+
+                    <!-- Если файл уже загружен, показываем его название (опционально) -->
+                    <small class="text-muted" th:if="${child.disabilityInfo.ipraFilePath != null}">
+                        Текущий файл: <span th:text="${child.disabilityInfo.ipraFilePath}"></span>
+                    </small>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a href="/children" class="btn btn-secondary">Отмена</a>
+                    <button type="submit" class="btn btn-success">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+
+
+========================================
+FILE: C:\social\src\main\resources\templates\child-list.html
+========================================
+
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Список детей</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">Реабилитационный Центр</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1 class="mb-4">Профили детей</h1>
+
+    <div class="mb-3">
+        <a href="/children/create" class="btn btn-success">Добавить ребенка</a>
+        <a href="/admin/users" class="btn btn-secondary">Пользователи</a>
+    </div>
+
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>ФИО</th>
+            <th>Дата рождения</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="child : ${children}">
+            <td th:text="${child.id}">1</td>
+            <td th:text="${child.surname + ' ' + child.name + ' ' + child.patronymic}">Иванов Иван Иванович</td>
+            <td th:text="${child.dateOfBirth}">2010-01-01</td>
+            <td>
+                <!-- Кнопка просмотра профиля -->
+                <a th:href="@{/children/{id}(id=${child.id})}" class="btn btn-info btn-sm text-white">Профиль</a>
+
+                <!-- Кнопка просмотра журнала занятий этого ребенка -->
+                <a th:href="@{/sessions/child/{id}(id=${child.id})}" class="btn btn-outline-primary btn-sm">Журнал</a>
+
+                <!-- Кнопки редактирования и удаления -->
+                <a th:href="@{/children/update/{id}(id=${child.id})}" class="btn btn-primary btn-sm">Редактировать</a>
+                <a th:href="@{/children/delete/{id}(id=${child.id})}" class="btn btn-danger btn-sm"
+                   onclick="return confirm('Удалить профиль ребенка?');">Удалить</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
+
+
+========================================
+FILE: C:\social\src\main\resources\templates\home.html
+========================================
+
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Реабилитационный центр</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-dark mb-5">
+    <div class="container d-flex justify-content-between">
+        <a class="navbar-brand" href="/">Реабилитационный Центр</a>
+
+        <!-- Кнопка выхода -->
+        <div>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-outline-light btn-sm">Выйти</button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container text-center">
+    <h1 class="mb-5">Добро пожаловать в систему</h1>
+
+    <div class="row justify-content-center">
+        <!-- Блок Администратора -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h4>Администратор</h4>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Управление пользователями системы.</p>
+                    <a href="/admin/users" class="btn btn-primary">Пользователи</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Блок Социального работника -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-success">
+                <div class="card-header bg-success text-white">
+                    <h4>Соц. работник</h4>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Работа с профилями детей и документами.</p>
+                    <a href="/children" class="btn btn-success">Список детей</a>
+                    <a href="/sessions" class="btn btn-outline-success mt-2">Расписание</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Блок Дефектолога -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h4>Дефектолог</h4>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Просмотр журнала и заполнение диагностики.</p>
+                    <a href="/children" class="btn btn-warning">Список детей</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+
+
+========================================
+FILE: C:\social\src\main\resources\templates\login.html
+========================================
+
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход в систему</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light d-flex align-items-center justify-content-center" style="height: 100vh;">
+
+<div class="card shadow" style="width: 400px;">
+    <div class="card-header bg-primary text-white text-center">
+        <h4>Реабилитационный Центр</h4>
+    </div>
+    <div class="card-body">
+        <!-- Сообщение об ошибке -->
+        <div th:if="${param.error}" class="alert alert-danger">
+            Неверный логин или пароль!
+        </div>
+        <!-- Сообщение о выходе -->
+        <div th:if="${param.logout}" class="alert alert-success">
+            Вы успешно вышли из системы.
+        </div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="mb-3">
+                <label for="username" class="form-label">Логин</label>
+                <input type="text" id="username" name="username" class="form-control" required autofocus>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Пароль</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Войти</button>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
+
+
+========================================
+FILE: C:\social\src\main\resources\templates\user-form.html
+========================================
+
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Форма пользователя</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">Реабилитационный Центр</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="card" style="max-width: 600px; margin: auto;">
+        <div class="card-header bg-primary text-white">
+            <!-- Заголовок меняется в зависимости от того, новый это пользователь или нет -->
+            <h4 th:if="${user.id == null}">Добавление пользователя</h4>
+            <h4 th:if="${user.id != null}">Редактирование пользователя</h4>
+        </div>
+        <div class="card-body">
+            <!-- Форма отправляет данные на /admin/users/save -->
+            <form th:action="@{/admin/users/save}" th:object="${user}" method="post">
+
+                <!-- Скрытое поле ID (нужно для редактирования) -->
+                <input type="hidden" th:field="*{id}" />
+
+                <div class="mb-3">
+                    <label class="form-label">Логин</label>
+                    <input type="text" th:field="*{username}" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" th:field="*{password}" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Роль</label>
+                    <select th:field="*{role}" class="form-select">
+                        <!-- Перебираем все значения Enum Role -->
+                        <option th:each="role : ${T(com.example.social.model.Role).values()}"
+                                th:value="${role}"
+                                th:text="${role}">
+                        </option>
+                    </select>
+                </div>
+
+                <hr>
+                <h5>Личные данные</h5>
+
+                <div class="mb-3">
+                    <label class="form-label">Фамилия</label>
+                    <input type="text" th:field="*{surname}" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Имя</label>
+                    <input type="text" th:field="*{name}" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Отчество</label>
+                    <input type="text" th:field="*{patronymic}" class="form-control">
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="/admin/users" class="btn btn-secondary">Отмена</a>
+                    <button type="submit" class="btn btn-success">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+
+
+========================================
+FILE: C:\social\src\main\resources\templates\user-list.html
+========================================
+
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Список пользователей</title>
+    <!-- Подключаем Bootstrap для красивого оформления -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<!-- Навигационное меню (простое) -->
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">Реабилитационный Центр</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1 class="mb-4">Управление пользователями</h1>
+
+    <!-- Кнопка добавления -->
+    <div class="mb-3">
+        <a href="/admin/users/create" class="btn btn-success">Добавить пользователя</a>
+    </div>
+
+    <!-- Таблица пользователей -->
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Логин</th>
+            <th>Роль</th>
+            <th>ФИО</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Цикл Thymeleaf: проходимся по списку users -->
+        <tr th:each="user : ${users}">
+            <td th:text="${user.id}">1</td>
+            <td th:text="${user.username}">login</td>
+            <td th:text="${user.role}">ROLE</td>
+            <td th:text="${user.surname + ' ' + user.name + ' ' + user.patronymic}">Иванов Иван Иванович</td>
+            <td>
+                <!-- Кнопки редактирования и удаления -->
+                <a th:href="@{/admin/users/update/{id}(id=${user.id})}" class="btn btn-primary btn-sm">Редактировать</a>
+                <a th:href="@{/admin/users/delete/{id}(id=${user.id})}" class="btn btn-danger btn-sm"
+                   onclick="return confirm('Вы уверены, что хотите удалить пользователя?');">Удалить</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
+
+
+========================================
+FILE: C:\social\src\test\java\com\example\social\SocialApplicationTests.java
+========================================
+
+package com.example.social;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class SocialApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}

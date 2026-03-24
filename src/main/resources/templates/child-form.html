@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Форма ребенка</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">Реабилитационный Центр</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="card" style="max-width: 800px; margin: auto;">
+        <div class="card-header bg-info text-white">
+            <h4 th:if="${child.id == null}">Добавление профиля ребенка</h4>
+            <h4 th:if="${child.id != null}">Редактирование профиля</h4>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/children/save}" th:object="${child}" method="post">
+
+                <input type="hidden" th:field="*{id}" />
+                <input type="hidden" th:field="*{disabilityInfo.id}" />
+
+                <h5>Личные данные</h5>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label>Фамилия</label>
+                        <input type="text" th:field="*{surname}" class="form-control" required>
+                    </div>
+                    <div class="col">
+                        <label>Имя</label>
+                        <input type="text" th:field="*{name}" class="form-control" required>
+                    </div>
+                    <div class="col">
+                        <label>Отчество</label>
+                        <input type="text" th:field="*{patronymic}" class="form-control">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label>Дата рождения</label>
+                    <input type="date" th:field="*{birthDate}" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>Пол</label>
+                    <select th:field="*{gender}" class="form-select">
+                        <option value="">Выберите пол</option>
+                        <option value="МУЖ">Мужской</option>
+                        <option value="ЖЕН">Женский</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label>СНИЛС</label>
+                    <input type="text" th:field="*{snils}" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>Адрес фактического проживания</label>
+                    <input type="text" th:field="*{actualAddress}" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>Адрес регистрации</label>
+                    <input type="text" th:field="*{registrationAddress}" class="form-control">
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col">
+                        <label>Серия документа</label>
+                        <input type="text" th:field="*{docSeries}" class="form-control">
+                    </div>
+                    <div class="col">
+                        <label>Номер документа</label>
+                        <input type="text" th:field="*{docNumber}" class="form-control">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label>Телефон законного представителя</label>
+                    <input type="text" th:field="*{representativePhone}" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>Степень родства законного представителя</label>
+                    <input type="text" th:field="*{representativeRelation}" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>ФИО законного представителя</label>
+                    <input type="text" th:field="*{representativeFio}" class="form-control">
+                </div>
+
+                <hr>
+                <h5>Информация об инвалидности и ИПРА</h5>
+
+                <div class="mb-3">
+                    <label>Группа инвалидности</label>
+                    <input type="text" th:field="*{disabilityInfo.disabilityGroup}" class="form-control">
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" th:field="*{disabilityInfo.isFirstTime}" class="form-check-input">
+                    <label class="form-check-label">Впервые установлена</label>
+                </div>
+
+                <div class="mb-3">
+                    <label>Дата установления инвалидности</label>
+                    <input type="date" th:field="*{disabilityInfo.establishmentDate}" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>Срок окончания инвалидности</label>
+                    <input type="date" th:field="*{disabilityInfo.expiryDate}" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>Причина инвалидности</label>
+                    <input type="text" th:field="*{disabilityInfo.cause}" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>Номер ИПРА</label>
+                    <input type="text" th:field="*{disabilityInfo.ipraNumber}" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>Срок действия ИПРА</label>
+                    <input type="date" th:field="*{disabilityInfo.ipraExpiryDate}" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>Реабилитационный потенциал</label>
+                    <input type="text" th:field="*{disabilityInfo.rehabPotential}" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>Реабилитационный прогноз</label>
+                    <input type="text" th:field="*{disabilityInfo.rehabPrognosis}" class="form-control">
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" th:field="*{disabilityInfo.isPalliative}" class="form-check-input">
+                    <label class="form-check-label">Нуждается в паллиативной помощи</label>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a href="/children" class="btn btn-secondary">Отмена</a>
+                    <button type="submit" class="btn btn-success">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
