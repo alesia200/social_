@@ -22,14 +22,14 @@ public class UserController {
     @GetMapping
     public String findAll(Model model) {
         model.addAttribute("users", userService.findAll());
-        return "user-list"; // имя HTML файла, который мы создадим позже
+        return "admin/user-list"; // имя HTML файла, который мы создадим позже
     }
 
     // 2. Показать форму создания пользователя
     @GetMapping("/create")
     public String createUserForm(Model model) {
         model.addAttribute("user", new User()); // Создаем пустой объект для формы
-        return "user-form"; // имя HTML файла
+        return "admin/user-form"; // имя HTML файла
     }
 
     // 3. Сохранить пользователя (админ создает нового)
@@ -53,6 +53,6 @@ public class UserController {
     public String updateUserForm(@PathVariable("id") Long id, Model model) {
         User user = userService.findById(id);
         model.addAttribute("user", user);
-        return "user-form";
+        return "admin/user-form";
     }
 }

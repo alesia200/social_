@@ -24,7 +24,7 @@ public class DataInitializer implements CommandLineRunner {
             // Создаём администратора
             User admin = new User();
             admin.setUsername("admin");
-            admin.setPassword(passwordEncoder.encode("admin")); // пароль admin
+            admin.setPassword(passwordEncoder.encode(" ")); // пароль admin
             admin.setRole(Role.ADMIN);
             admin.setSurname("Администратор");
             admin.setName("Системы");
@@ -35,7 +35,7 @@ public class DataInitializer implements CommandLineRunner {
             // (Опционально) Создаём тестового социального работника
             User socialWorker = new User();
             socialWorker.setUsername("social");
-            socialWorker.setPassword(passwordEncoder.encode("social"));
+            socialWorker.setPassword(passwordEncoder.encode(" "));
             socialWorker.setRole(Role.SOCIAL_WORKER);
             socialWorker.setSurname("Петрова");
             socialWorker.setName("Анна");
@@ -46,7 +46,7 @@ public class DataInitializer implements CommandLineRunner {
             // (Опционально) Создаём тестового дефектолога
             User defectologist = new User();
             defectologist.setUsername("defect");
-            defectologist.setPassword(passwordEncoder.encode("defect"));
+            defectologist.setPassword(passwordEncoder.encode(" "));
             defectologist.setRole(Role.DEFECTOLOGIST);
             defectologist.setSurname("Сидорова");
             defectologist.setName("Елена");

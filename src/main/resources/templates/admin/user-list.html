@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layouts::head('Список пользователей')}">
+<body>
+<div th:replace="~{fragments/layouts::header}"></div>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Сайдбар -->
+        <div class="col-md-3 col-lg-2 p-0">
+            <div th:replace="~{fragments/layouts::sidebar}"></div>
+        </div>
+
+        <!-- Основной контент страницы -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-3">
+            <div class="container">
+                <h1 class="mb-4">Управление пользователями</h1>
+
+                <!-- Кнопка добавления -->
+                <div class="mb-3">
+                    <a href="/admin/users/create" class="btn btn-success">Добавить пользователя</a>
+                </div>
+
+                <!-- Таблица пользователей -->
+                <table class="table table-striped table-bordered">
+                    <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Логин</th>
+                        <th>Роль</th>
+                        <th>ФИО</th>
+                        <th>Действия</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Цикл Thymeleaf: проходимся по списку users -->
+                    <tr th:each="user : ${users}">
+                        <td th:text="${user.id}">1</td>
+                        <td th:text="${user.username}">login</td>
+                        <td th:text="${user.role}">ROLE</td>
+                        <td th:text="${user.surname + ' ' + user.name + ' ' + user.patronymic}">Иванов Иван Иванович</td>
+                        <td>
+                            <!-- Кнопки редактирования и удаления -->
+                            <a th:href="@{/admin/users/update/{id}(id=${user.id})}" class="btn btn-primary btn-sm">Редактировать</a>
+                            <a th:href="@{/admin/users/delete/{id}(id=${user.id})}" class="btn btn-danger btn-sm"
+                               onclick="return confirm('Вы уверены, что хотите удалить пользователя?');">Удалить</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layouts::footer}"></div>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layouts::head('Форма пользователя')}">
+<body>
+<div th:replace="~{fragments/layouts::header}"></div>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Сайдбар -->
+        <div class="col-md-3 col-lg-2 p-0">
+            <div th:replace="~{fragments/layouts::sidebar}"></div>
+        </div>
+
+        <!-- Основной контент страницы -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-3">
+            <div class="container">
+                <div class="card" style="max-width: 600px; margin: auto;">
+                    <div class="card-header bg-primary text-white">
+                        <!-- Заголовок меняется в зависимости от того, новый это пользователь или нет -->
+                        <h4 th:if="${user.id == null}">Добавление пользователя</h4>
+                        <h4 th:if="${user.id != null}">Редактирование пользователя</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Форма отправляет данные на /admin/users/save -->
+                        <form th:action="@{/admin/users/save}" th:object="${user}" method="post">
+
+                            <!-- Скрытое поле ID (нужно для редактирования) -->
+                            <input type="hidden" th:field="*{id}" />
+
+                            <div class="mb-3">
+                                <label class="form-label">Логин</label>
+                                <input type="text" th:field="*{username}" class="form-control" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Пароль</label>
+                                <input type="password" th:field="*{password}" class="form-control" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Роль</label>
+                                <select th:field="*{role}" class="form-select">
+                                    <!-- Перебираем все значения Enum Role -->
+                                    <option th:each="role : ${T(com.example.social.model.Role).values()}"
+                                            th:value="${role}"
+                                            th:text="${role}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <hr>
+                            <h5>Личные данные</h5>
+
+                            <div class="mb-3">
+                                <label class="form-label">Фамилия</label>
+                                <input type="text" th:field="*{surname}" class="form-control">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Имя</label>
+                                <input type="text" th:field="*{name}" class="form-control">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Отчество</label>
+                                <input type="text" th:field="*{patronymic}" class="form-control">
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/admin/users" class="btn btn-secondary">Отмена</a>
+                                <button type="submit" class="btn btn-success">Сохранить</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{fragments/layouts::footer}"></div>
+</body>
+</html>
