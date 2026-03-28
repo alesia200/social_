@@ -48,8 +48,23 @@ public class UserService implements UserDetailsService {
     }
 
     // При сохранении шифруем пароль!
+    // Исправленный код UserService
     public void save(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        //Если это редактирование (ID не null)
+        if (user.getId() != null) {
+            User existingUser = userRepository.findById(user.getId()).orElse(null);
+
+            // Если пароль в форме пустой — оставляем старый из базы
+            if (user.getPassword() == null || user.getPassword().isEmpty()) {
+                user.setPassword(existingUser.getPassword());
+            } else {
+                // Если пароль ввели новый — шифруем его
+                user.setPassword(passwordEncoder.encode(user.getPassword()));
+            }
+        } else {
+            // Если это создание — просто шифруем пароль
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
         userRepository.save(user);
     }
 

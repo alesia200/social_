@@ -76,7 +76,7 @@
                 </a>
             </li>
 
-            <!-- Раздел: Основная работа (ADMIN, SOCIAL_WORKER) -->
+            <!-- Раздел: Дети, расписание (ADMIN, SOCIAL_WORKER) -->
             <!-- Дефектолог тоже видит детей, но функционал у него другой -->
             <li class="nav-item mt-2">
                 <a th:href="@{/children}" class="nav-link link-dark">
@@ -100,8 +100,8 @@
                 </a>
             </li>
 
-            <!-- Отчеты и Документы (Только Соц. работник и Админ) -->
-            <li class="nav-item mt-2" sec:authorize="hasAnyRole('ADMIN', 'SOCIAL_WORKER')">
+            <!-- Отчеты и Документы (Только Соц. работник) -->
+            <li class="nav-item mt-2" sec:authorize="hasAnyRole('SOCIAL_WORKER')">
                 <a th:href="@{/reports}" class="nav-link link-dark">
                     <i class="bi bi-file-earmark-bar-graph me-2"></i> Отчеты и Документы
                 </a>

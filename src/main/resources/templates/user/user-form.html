@@ -25,17 +25,23 @@
 
                             <!-- Скрытое поле ID (нужно для редактирования) -->
                             <input type="hidden" th:field="*{id}" />
-
+                            <!-- Поле Логин -->
                             <div class="mb-3">
                                 <label class="form-label">Логин</label>
-                                <input type="text" th:field="*{username}" class="form-control" required>
+                                <input type="text"
+                                       th:field="*{username}" class="form-control"
+                                       th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Ошибка валидации</div>
                             </div>
 
+                            <!-- Поле Пароль -->
                             <div class="mb-3">
                                 <label class="form-label">Пароль</label>
-                                <input type="password" th:field="*{password}" class="form-control" required>
+                                <input type="password" th:field="*{password}" class="form-control"
+                                       th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Ошибка</div>
                             </div>
-
+                            <!-- Поле Роль -->
                             <div class="mb-3">
                                 <label class="form-label">Роль</label>
                                 <select th:field="*{role}" class="form-select">
@@ -49,20 +55,26 @@
 
                             <hr>
                             <h5>Личные данные</h5>
-
+                            <!-- Поле Фамилия -->
                             <div class="mb-3">
                                 <label class="form-label">Фамилия</label>
-                                <input type="text" th:field="*{surname}" class="form-control">
+                                <input type="text" th:field="*{surname}" class="form-control"
+                                       th:classappend="${#fields.hasErrors('surname')} ? 'is-invalid'">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('surname')}" th:errors="*{surname}">Ошибка</div>
                             </div>
-
+                            <!-- Поле Имя -->
                             <div class="mb-3">
                                 <label class="form-label">Имя</label>
-                                <input type="text" th:field="*{name}" class="form-control">
+                                <input type="text" th:field="*{name}" class="form-control"
+                                       th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Ошибка</div>
                             </div>
-
+                            <!-- Поле Отчество -->
                             <div class="mb-3">
                                 <label class="form-label">Отчество</label>
-                                <input type="text" th:field="*{patronymic}" class="form-control">
+                                <input type="text" th:field="*{patronymic}" class="form-control"
+                                       th:classappend="${#fields.hasErrors('patronymic')} ? 'is-invalid'">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('patronymic')}" th:errors="*{patronymic}">Ошибка</div>
                             </div>
 
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">

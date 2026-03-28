@@ -10,6 +10,6 @@ public class DefectologistController {
 
     @GetMapping("/dashboard")
     public String dashboard() {
-        return "defectologist/dashboard";
+        return "dashboard";
     }
 }

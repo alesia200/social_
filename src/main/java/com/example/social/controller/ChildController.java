@@ -22,14 +22,14 @@ public class ChildController {
     @GetMapping
     public String findAll(Model model) {
         model.addAttribute("children", childService.findAll());
-        return "child-list";
+        return "children/child-list";
     }
 
     @GetMapping("/{id}")
     public String findById(@PathVariable("id") Long id, Model model) {
         Child child = childService.findById(id);
         model.addAttribute("child", child);
-        return "child-profile"; // Убедитесь, что файл child-profile.html существует
+        return "children/child-profile";
     }
 
     @GetMapping("/create")
@@ -38,7 +38,7 @@ public class ChildController {
         // Инициализируем пустой объект, чтобы форма работала корректно
         child.setDisabilityInfo(new DisabilityInfo());
         model.addAttribute("child", child);
-        return "child-form";
+        return "children/child-form";
     }
 
     // ИСПРАВЛЕННЫЙ МЕТОД СОХРАНЕНИЯ
@@ -59,7 +59,7 @@ public class ChildController {
     public String updateChildForm(@PathVariable("id") Long id, Model model) {
         Child child = childService.findById(id);
         model.addAttribute("child", child);
-        return "child-form";
+        return "children/child-form";
     }
 
     @GetMapping("/delete/{id}")
