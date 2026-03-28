@@ -1,6 +1,8 @@
 package com.example.social.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -12,43 +14,63 @@ public class Child {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID_child")
     private Long id;
-
-    @Column(name = "surname", length = 100, nullable = false)
+    //Общая информация
+    @NotBlank(message = "Фамилия не может быть пустой")
+    @Size(max = 100, message = "Фамилия не должна превышать 100 символов")
+    @Column(name = "surname", length = 100)
     private String surname;
 
-    @Column(name = "name", length = 100, nullable = false)
+    @NotBlank(message = "Имя не может быть пустым")
+    @Size(max = 100, message = "Имя не должно превышать 100 символов")
+    @Column(name = "name", length = 100)
     private String name;
 
+    @Size(max=100, message = "Отчество не должно превышать 100 символов")
     @Column(name = "patronymic", length = 100)
     private String patronymic;
 
+    @NotNull(message = "Дата рождения не может быть пустой")
+    @PastOrPresent(message = "Дата рождения не может быть в будущем")
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
+    @NotNull(message = "Пожалуйста, выберите пол")
+    @Enumerated(EnumType.STRING)
     @Column(name = "gender", length = 10)
-    private String gender;
+    private Gender gender;
 
+    @NotBlank(message = "СНИЛС не может быть пустым значением")
+    @Size(max=14, message = "СНИЛС не должен превышать 14 символов")
     @Column(name = "snils", length = 14)
     private String snils;
 
     @Column(name = "actual_address", length = 500)
+    @Size(max=500, message = "Адрес не должен превышать 500 символов")
     private String actualAddress;
 
     @Column(name = "registration_address", length = 500)
+    @Size(max=500, message = "Адрес не должен превышать 500 символов")
     private String registrationAddress;
 
+    //Информация о законном представителе
+    //Документ, удостоверяющий личность законного (уполномоченного) представителя
     @Column(name = "doc_series", length = 10)
+    @Size(max=10, message = "Серия паспорта не должен быть меньше 10 символов")
     private String docSeries;
 
     @Column(name = "doc_number", length = 20)
+    @Size(max=10, message = "Номер паспорта не должен быть меньше 10 символов")
     private String docNumber;
 
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Введите корректный номер телефона")
     @Column(name = "representative_phone", length = 20)
     private String representativePhone;
 
-    @Column(name = "representative_relation", length = 20)
+    @Size(max = 100, message = "ФИО представителя не должно превышать 100 символов")
+    @Column(name = "representative_relation", length = 100)
     private String representativeRelation;
 
+    @Size(max = 100, message = "ФИО законного представителя не должно превышать 100 символов")
     @Column(name = "representative_fio", length = 100)
     private String representativeFio;
 
@@ -74,8 +96,12 @@ public class Child {
     public void setPatronymic(String patronymic) { this.patronymic = patronymic; }
     public LocalDate getBirthDate() { return birthDate; }
     public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
-    public String getGender() { return gender; }
-    public void setGender(String gender) { this.gender = gender; }
+    public Gender getGender() {
+        return gender;
+    }
+    public void setGender(Gender gender) {
+        this.gender = gender;
+    }
     public String getSnils() { return snils; }
     public void setSnils(String snils) { this.snils = snils; }
     public String getActualAddress() { return actualAddress; }
