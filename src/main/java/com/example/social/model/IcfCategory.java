@@ -1,6 +1,9 @@
 package com.example.social.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 
 @Entity
@@ -12,12 +15,22 @@ public class IcfCategory {
     @Column(name = "ID_category")
     private Long id;
 
+    @NotBlank(message = "Код МКФ обязателен")
+    @Pattern(regexp = "^[bcdqs][1-9]\\d{0,2}(\\.\\d{1,2})?$",
+            message = "Неверный формат кода МКФ. Пример: b110, d450.1, s760")
+    @Size(max = 10, message = "Код МКФ не может превышать 10 символов")
     @Column(name = "code_MKF", length = 10)
     private String codeMKF;
 
+    @NotBlank(message = "Наименование категории обязательно")
+    @Size(max = 255, message = "Наименование не может превышать 255 символов")
     @Column(name = "name", length = 255)
     private String name;
 
+    // Флаги возрастных групп.
+    // Для справочника не ставим @NotNull, так как по умолчанию false — это нормально.
+    // Если по логике нужно ОБЯЗАТЕЛЬНО выбрать хотя бы одну группу,
+    // можно создать кастомную аннотацию @AtLeastOneAgeGroup, но обычно это не требуется.
     @Column(name = "is_age_0_3")
     private Boolean isAge03;
 

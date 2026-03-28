@@ -1,6 +1,7 @@
 package com.example.social.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -13,33 +14,45 @@ public class ClassSession {
     @Column(name = "ID_session")
     private Long id;
 
+    @NotNull(message = "Укажите план занятий")
     @ManyToOne
     @JoinColumn(name = "ID_service_plan")
     private ServicePlan servicePlan;
 
+    @NotNull(message = "Укажите ребёнка")
     @ManyToOne
     @JoinColumn(name = "ID_child")
     private Child child;
 
+    @NotNull(message = "Укажите дефектолога")
     @ManyToOne
     @JoinColumn(name = "ID_specialist")
     private User defectologist;
 
+    @NotNull(message = "Укажите дату занятия")
+    @PastOrPresent(message = "Дата не может быть в будущем")
     @Column(name = "session_date")
     private LocalDate sessionDate;
 
+    @NotNull(message = "Укажите время начала")
     @Column(name = "start_time")
     private LocalTime startTime;
 
+    @NotBlank(message = "Укажите статус занятия")
+    @Pattern(regexp = "^(planned|completed|missed|cancelled)$",
+            message = "Допустимые статусы: planned, completed, missed, cancelled")
     @Column(name = "status", length = 20)
     private String status;
 
+    @Size(max = 255, message = "Тема не может превышать 255 символов")
     @Column(name = "topic_theme", length = 255)
     private String topicTheme;
 
+    @Size(max = 500, message = "Цели не могут превышать 500 символов")
     @Column(name = "goals", length = 500)
     private String goals;
 
+    @Size(max = 5000, message = "Заметки не могут превышать 5000 символов")
     @Column(name = "specialist_notes", columnDefinition = "TEXT")
     private String specialistNotes;
 
