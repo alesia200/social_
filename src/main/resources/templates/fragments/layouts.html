@@ -34,12 +34,12 @@
 
             <!-- Информация о пользователе справа -->
             <div class="d-flex align-items-center">
-                <!-- Отображаем имя и роль текущего пользователя -->
                 <span class="text-white me-3">
                     <i class="bi bi-person-circle"></i>
-                    <span sec:authentication="name">Пользователь</span>
+                    <span th:text="${#authentication.principal.getUser().getSurname()}">Фамилия</span>
+                    <span th:text="${#authentication.principal.getUser().getName()}">Имя</span>
                     <small class="opacity-75 ms-1">
-                        (<span sec:authentication="principal.authorities">Роль</span>)
+                        (<span th:text="${#authentication.principal.getUser().getPosition()}">Должность</span>)
                     </small>
                 </span>
 
@@ -114,7 +114,7 @@
 <!-- Подвал -->
 <footer class="bg-light py-3 border-top mt-auto" th:fragment="footer">
     <div class="container text-center">
-        <span class="text-muted">&copy; 2025 Курсовой проект "Реабилитационный центр"</span>
+        <span class="text-muted">Курсовой проект "Реабилитационный центр"</span>
     </div>
 </footer>
 

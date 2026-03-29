@@ -1,5 +1,6 @@
 package com.example.social.service;
 
+import com.example.social.config.CustomUserDetails;
 import com.example.social.model.User;
 import com.example.social.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,12 +32,8 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // Преобразуем нашего User в Spring Security User
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
-                .password(user.getPassword()) // Пароль уже должен быть зашифрован в базе
-                .roles(user.getRole().name()) // Подставляем роль
-                .build();
+        // Оборачиваем вашу сущность в CustomUserDetails
+        return new CustomUserDetails(user);
     }
 
     public List<User> findAll() {

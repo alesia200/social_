@@ -14,31 +14,31 @@ public class ClassSession {
     @Column(name = "ID_session")
     private Long id;
 
-    @NotNull(message = "Укажите план занятий")
+
     @ManyToOne
     @JoinColumn(name = "ID_service_plan")
     private ServicePlan servicePlan;
 
-    @NotNull(message = "Укажите ребёнка")
+
     @ManyToOne
     @JoinColumn(name = "ID_child")
     private Child child;
 
-    @NotNull(message = "Укажите дефектолога")
+
     @ManyToOne
     @JoinColumn(name = "ID_specialist")
     private User defectologist;
 
-    @NotNull(message = "Укажите дату занятия")
+
     @PastOrPresent(message = "Дата не может быть в будущем")
     @Column(name = "session_date")
     private LocalDate sessionDate;
 
-    @NotNull(message = "Укажите время начала")
+
     @Column(name = "start_time")
     private LocalTime startTime;
 
-    @NotBlank(message = "Укажите статус занятия")
+
     @Pattern(regexp = "^(planned|completed|missed|cancelled)$",
             message = "Допустимые статусы: planned, completed, missed, cancelled")
     @Column(name = "status", length = 20)

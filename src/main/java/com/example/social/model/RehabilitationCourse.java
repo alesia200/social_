@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -18,31 +19,24 @@ public class RehabilitationCourse {
     @Column(name = "ID_rehab_course")
     private Long id;
 
-    @NotNull(message = "Укажите ребёнка")
     @ManyToOne
     @JoinColumn(name = "ID_child")
     private Child child;
 
-    @NotNull(message = "Укажите дату начала курса")
     @PastOrPresent(message = "Дата начала не может быть в будущем")
     @Column(name = "start_date")
     private LocalDate startDate;
 
-    @NotNull(message = "Укажите дату окончания курса")
     @FutureOrPresent(message = "Дата окончания не может быть в прошлом")
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @NotBlank(message = "Укажите номер договора/направления")
-    @Pattern(regexp = "^[\\dА-Яа-яA-Za-z\\-/№ ]+$",
-            message = "Номер содержит недопустимые символы")
+
     @Size(max = 50, message = "Номер не может превышать 50 символов")
     @Column(name = "contract_number", length = 50)
     private String contractNumber;
 
-    @NotBlank(message = "Укажите статус курса")
-    @Pattern(regexp = "^(planned|active|completed|cancelled)$",
-            message = "Допустимые статусы: planned, active, completed, cancelled")
+
     @Column(name = "status", length = 20)
     private String status;
 
@@ -53,10 +47,9 @@ public class RehabilitationCourse {
     @Column(name = "effectiveness_percentage", precision = 5, scale = 2)
     private BigDecimal effectivenessPercentage;
 
-    @Valid
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "ID_protocol")
-    private DiagnosticProtocol diagnosticProtocol;
+
+    @OneToMany(mappedBy = "rehabCourse", cascade = CascadeType.ALL)
+    private List<DiagnosticProtocol> diagnosticProtocols = new ArrayList<>();
 
     @OneToMany(mappedBy = "rehabCourse", cascade = CascadeType.ALL)
     private List<ServicePlan> servicePlans;
@@ -76,8 +69,15 @@ public class RehabilitationCourse {
     public void setStatus(String status) { this.status = status; }
     public BigDecimal getEffectivenessPercentage() { return effectivenessPercentage; }
     public void setEffectivenessPercentage(BigDecimal effectivenessPercentage) { this.effectivenessPercentage = effectivenessPercentage; }
-    public DiagnosticProtocol getDiagnosticProtocol() { return diagnosticProtocol; }
-    public void setDiagnosticProtocol(DiagnosticProtocol diagnosticProtocol) { this.diagnosticProtocol = diagnosticProtocol; }
+
+    public List<DiagnosticProtocol> getDiagnosticProtocols() {
+        return diagnosticProtocols;
+    }
+
+    public void setDiagnosticProtocols(List<DiagnosticProtocol> diagnosticProtocols) {
+        this.diagnosticProtocols = diagnosticProtocols;
+    }
+
     public List<ServicePlan> getServicePlans() { return servicePlans; }
     public void setServicePlans(List<ServicePlan> servicePlans) { this.servicePlans = servicePlans; }
 }

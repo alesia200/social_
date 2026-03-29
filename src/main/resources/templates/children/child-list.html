@@ -37,14 +37,12 @@
                         <td>
                             <!-- Кнопка просмотра профиля -->
                             <a th:href="@{/children/{id}(id=${child.id})}" class="btn btn-info btn-sm text-white">Профиль</a>
-
-                            <!-- Кнопка просмотра журнала занятий этого ребенка -->
-                            <a th:href="@{/sessions/child/{id}(id=${child.id})}" class="btn btn-outline-primary btn-sm">Журнал</a>
-
                             <!-- Кнопки редактирования и удаления -->
-                            <a th:href="@{/children/update/{id}(id=${child.id})}" class="btn btn-primary btn-sm">Редактировать</a>
+                            <a th:href="@{/children/edit/{id}(id=${child.id})}" class="btn btn-primary btn-sm">Редактировать</a>
                             <a th:href="@{/children/delete/{id}(id=${child.id})}" class="btn btn-danger btn-sm"
                                onclick="return confirm('Удалить профиль ребенка?');">Удалить</a>
+                            <!-- Кнопка просмотра журнала занятий этого ребенка -->
+                            <a th:href="@{/sessions/child/{id}(id=${child.id})}" class="btn btn-outline-primary btn-sm">Журнал</a>
                         </td>
                     </tr>
                     </tbody>

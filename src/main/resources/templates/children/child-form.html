@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layouts::head('Форма пользователя')}">
+<head th:replace="~{fragments/layouts::head('Профиль ребенка')}">
 <body>
 <div th:replace="~{fragments/layouts::header}"></div>
 <div class="container-fluid">
@@ -12,152 +12,104 @@
 
         <!-- Основной контент страницы -->
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-3">
-            <div class="container">
-                <div class="card" style="max-width: 800px; margin: auto;">
-                    <div class="card-header bg-info text-white">
-                        <h4 th:if="${child.id == null}">Добавление профиля ребенка</h4>
-                        <h4 th:if="${child.id != null}">Редактирование профиля</h4>
+
+            <!-- Breadcrumbs -->
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/}">Главная</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/children}">Список детей</a></li>
+                    <!-- Промежуточный пункт только при редактировании -->
+                    <li class="breadcrumb-item" th:if="${child.id != null}">
+                        <a th:href="@{/children/{id}(id=${child.id})}"
+                           th:text="${child.surname + ' ' + child.name + ' ' + child.patronymic}">ФИО</a>
+                    </li>
+                    <!-- Текущая страница -->
+                    <li class="breadcrumb-item active" aria-current="page" th:if="${child.id == null}">
+                        Добавление профиля
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page" th:if="${child.id != null}">
+                        Редактирование профиля
+                    </li>
+                </ol>
+            </nav>
+
+            <!-- Плашка с ФИО ребёнка -->
+            <div class="card mb-3">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <!-- Создание -->
+                        <h4 class="mb-1" th:if="${child.id == null}">Новый профиль</h4>
+                        <!-- Редактирование -->
+                        <div th:if="${child.id != null}">
+                            <h4 class="mb-1"
+                                th:text="${child.surname + ' ' + child.name + ' ' + child.patronymic}">
+                                Фамилия Имя Отчество
+                            </h4>
+                            <div class="text-muted" th:if="${child.birthDate != null}"
+                                 th:text="'Дата рождения: ' + ${#temporals.format(child.birthDate, 'dd.MM.yyyy')}">
+                                Дата рождения: —
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <form th:action="@{/children/save}" th:object="${child}" method="post">
-
-                            <input type="hidden" th:field="*{id}"/>
-                            <input type="hidden" th:field="*{disabilityInfo.id}"/>
-
-                            <h5>Личные данные</h5>
-                            <div class="row mb-3">
-                                <div class="col">
-                                    <label>Фамилия</label>
-                                    <input type="text" th:field="*{surname}" class="form-control" required>
-                                </div>
-                                <div class="col">
-                                    <label>Имя</label>
-                                    <input type="text" th:field="*{name}" class="form-control" required>
-                                </div>
-                                <div class="col">
-                                    <label>Отчество</label>
-                                    <input type="text" th:field="*{patronymic}" class="form-control">
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Дата рождения</label>
-                                <input type="date" th:field="*{birthDate}" class="form-control">
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Пол</label>
-                                <select th:field="*{gender}" class="form-select">
-                                    <option value="">Выберите пол</option>
-                                    <option value="МУЖ">Мужской</option>
-                                    <option value="ЖЕН">Женский</option>
-                                </select>
-                            </div>
-
-                            <div class="mb-3">
-                                <label>СНИЛС</label>
-                                <input type="text" th:field="*{snils}" class="form-control">
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Адрес фактического проживания</label>
-                                <input type="text" th:field="*{actualAddress}" class="form-control">
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Адрес регистрации</label>
-                                <input type="text" th:field="*{registrationAddress}" class="form-control">
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col">
-                                    <label>Серия документа</label>
-                                    <input type="text" th:field="*{docSeries}" class="form-control">
-                                </div>
-                                <div class="col">
-                                    <label>Номер документа</label>
-                                    <input type="text" th:field="*{docNumber}" class="form-control">
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Телефон законного представителя</label>
-                                <input type="text" th:field="*{representativePhone}" class="form-control">
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Степень родства законного представителя</label>
-                                <input type="text" th:field="*{representativeRelation}" class="form-control">
-                            </div>
-
-                            <div class="mb-3">
-                                <label>ФИО законного представителя</label>
-                                <input type="text" th:field="*{representativeFio}" class="form-control">
-                            </div>
-
-                            <hr>
-                            <h5>Информация об инвалидности и ИПРА</h5>
-
-                            <div class="mb-3">
-                                <label>Группа инвалидности</label>
-                                <input type="text" th:field="*{disabilityInfo.disabilityGroup}" class="form-control">
-                            </div>
-
-                            <div class="mb-3 form-check">
-                                <input type="checkbox" th:field="*{disabilityInfo.isFirstTime}"
-                                       class="form-check-input">
-                                <label class="form-check-label">Впервые установлена</label>
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Дата установления инвалидности</label>
-                                <input type="date" th:field="*{disabilityInfo.establishmentDate}" class="form-control">
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Срок окончания инвалидности</label>
-                                <input type="date" th:field="*{disabilityInfo.expiryDate}" class="form-control">
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Причина инвалидности</label>
-                                <input type="text" th:field="*{disabilityInfo.cause}" class="form-control">
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Номер ИПРА</label>
-                                <input type="text" th:field="*{disabilityInfo.ipraNumber}" class="form-control">
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Срок действия ИПРА</label>
-                                <input type="date" th:field="*{disabilityInfo.ipraExpiryDate}" class="form-control">
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Реабилитационный потенциал</label>
-                                <input type="text" th:field="*{disabilityInfo.rehabPotential}" class="form-control">
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Реабилитационный прогноз</label>
-                                <input type="text" th:field="*{disabilityInfo.rehabPrognosis}" class="form-control">
-                            </div>
-
-                            <div class="mb-3 form-check">
-                                <input type="checkbox" th:field="*{disabilityInfo.isPalliative}"
-                                       class="form-check-input">
-                                <label class="form-check-label">Нуждается в паллиативной помощи</label>
-                            </div>
-
-                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                                <a href="/children" class="btn btn-secondary">Отмена</a>
-                                <button type="submit" class="btn btn-success">Сохранить</button>
-                            </div>
-                        </form>
+                    <div>
+                        <!-- Кнопка отмены ведет либо к списку, либо к просмотру профиля -->
+                        <a th:if="${child.id == null}" th:href="@{/children}"
+                           class="btn btn-outline-secondary btn-sm">Отмена</a>
+                        <a th:if="${child.id != null}" th:href="@{/children/{id}(id=${child.id})}"
+                           class="btn btn-outline-secondary btn-sm">Отмена</a>
+                        <button type="submit" form="child-form" class="btn btn-success btn-sm">Сохранить</button>
                     </div>
                 </div>
             </div>
+
+            <!-- Вкладки -->
+            <ul class="nav nav-tabs" id="childTabs" role="tablist">
+                <!-- Личные данные -->
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="personal-tab" data-bs-toggle="tab"
+                            data-bs-target="#personal" type="button" role="tab"
+                            aria-controls="personal" aria-selected="true">
+                        Личные данные
+                    </button>
+                </li>
+                <!-- Диагностика -->
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="diagnostics-tab" data-bs-toggle="tab"
+                            data-bs-target="#diagnostics" type="button" role="tab"
+                            aria-controls="diagnostics" aria-selected="false">
+                        Диагностика
+                    </button>
+                </li>
+                <!-- Расписание -->
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="schedule-tab" data-bs-toggle="tab"
+                            data-bs-target="#schedule" type="button" role="tab"
+                            aria-controls="schedule" aria-selected="false">
+                        Расписание
+                    </button>
+                </li>
+                <!-- Журнал занятий -->
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="class-journal" data-bs-toggle="tab"
+                            data-bs-target="#class-journal" type="button" role="tab"
+                            aria-controls="class-journal" aria-selected="false">
+                        Журнал занятий
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Контент вкладок -->
+            <form th:action="@{/children/save}" th:object="${child}" method="post" id="child-form">
+                <input type="hidden" th:field="*{id}"/>
+                <input type="hidden" th:field="*{disabilityInfo.id}"/>
+                <div class="tab-content p-3 border border-top-0 rounded-bottom" id="childTabsContent">
+                    <!-- Вкладка: Личные данные -->
+                    <div class="tab-pane fade show active" id="personal" role="tabpanel"
+                         aria-labelledby="personal-tab">
+                        <div th:replace="~{fragments/child/personal-data :: form-view}"></div>
+                    </div>
+                </div>
+            </form>
         </main>
     </div>
 </div>

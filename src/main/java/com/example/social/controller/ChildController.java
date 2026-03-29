@@ -24,42 +24,33 @@ public class ChildController {
         model.addAttribute("children", childService.findAll());
         return "children/child-list";
     }
-
+    //форма просмотра профиля ребенка
     @GetMapping("/{id}")
-    public String findById(@PathVariable("id") Long id, Model model) {
+    public String showChildForm(@PathVariable Long id, Model model) {
         Child child = childService.findById(id);
         model.addAttribute("child", child);
         return "children/child-profile";
     }
-
+    //форма редактирования профиля ребенка
+    @GetMapping("/edit/{id}")
+    public String updateChildForm(@PathVariable Long id, Model model) {
+        Child child = childService.findById(id);
+        model.addAttribute("child", child);
+        return "children/child-form";
+    }
+    //форма создания нового профиля ребенка
     @GetMapping("/create")
     public String createChildForm(Model model) {
         Child child = new Child();
         // Инициализируем пустой объект, чтобы форма работала корректно
-        child.setDisabilityInfo(new DisabilityInfo());
         model.addAttribute("child", child);
         return "children/child-form";
     }
-
-    // ИСПРАВЛЕННЫЙ МЕТОД СОХРАНЕНИЯ
-    // Мы убрали MultipartFile и логику сохранения файлов, так как в новом ТЗ нет поля для пути к файлу
     @PostMapping("/save")
     public String saveChild(Child child) {
 
-        // Если у ребенка еще нет инфо об инвалидности (на всякий случай), создаем объект
-        if (child.getDisabilityInfo() == null) {
-            child.setDisabilityInfo(new DisabilityInfo());
-        }
-
         childService.save(child);
         return "redirect:/children";
-    }
-
-    @GetMapping("/update/{id}")
-    public String updateChildForm(@PathVariable("id") Long id, Model model) {
-        Child child = childService.findById(id);
-        model.addAttribute("child", child);
-        return "children/child-form";
     }
 
     @GetMapping("/delete/{id}")

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!-- БЛОК ДЛЯ ПРОСМОТРА (child-profile.html) -->
+<div th:fragment="profile-view">
+    <h5 class="mb-3">Основные сведения</h5>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="text-muted small">Фамилия</div>
+            <div th:text="${child.surname} ?: '—'">—</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">Имя</div>
+            <div th:text="${child.name} ?: '—'">—</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">Отчество</div>
+            <div th:text="${child.patronymic} ?: '—'">—</div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="text-muted small">Дата рождения</div>
+            <div th:if="${child.birthDate != null}"
+                 th:text="${#temporals.format(child.birthDate, 'dd.MM.yyyy')}">—</div>
+            <div th:if="${child.birthDate == null}">—</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">Пол</div>
+            <div th:switch="${child.gender?.name()}">
+                <span th:case="'МУЖ'">Мужской</span>
+                <span th:case="'ЖЕН'">Женский</span>
+                <span th:case="*">—</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">СНИЛС</div>
+            <div th:text="${child.snils} ?: '—'">—</div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <h5 class="mb-3">Адресные данные</h5>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="text-muted small">Адрес фактического проживания</div>
+            <div th:text="${child.actualAddress} ?: '—'">—</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">Адрес регистрации</div>
+            <div th:text="${child.registrationAddress} ?: '—'">—</div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+    <h5 class="mb-3">Законный представитель</h5>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="text-muted small">ФИО законного представителя</div>
+            <div th:text="${child.representativeFio} ?: '—'">—</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">Степень родства</div>
+            <div th:text="${child.representativeRelation} ?: '—'">—</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">Телефон</div>
+            <div th:text="${child.representativePhone} ?: '—'">—</div>
+        </div>
+    </div>
+    <h6 class="mb-3">Документ удостоверяющий личность</h6>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="text-muted small">Серия документа</div>
+            <div th:text="${child.docSeries} ?: '—'">—</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">Номер документа</div>
+            <div th:text="${child.docNumber} ?: '—'">—</div>
+        </div>
+    </div>
+    <hr class="my-4">
+    <h5 class="mb-3">Сведения об инвалидности</h5>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="text-muted small">Группа инвалидности</div>
+            <div th:text="${child.disabilityInfo.disabilityGroup} ?: '—'">—</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">Дата установления</div>
+            <div th:if="${child.disabilityInfo.establishmentDate != null}"
+                 th:text="${#temporals.format(child.disabilityInfo.establishmentDate, 'dd.MM.yyyy')}">—</div>
+            <div th:if="${child.disabilityInfo.establishmentDate == null}">—</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">Срок окончания</div>
+            <div th:if="${child.disabilityInfo.expiryDate != null}"
+                 th:text="${#temporals.format(child.disabilityInfo.expiryDate, 'dd.MM.yyyy')}">—</div>
+            <div th:if="${child.disabilityInfo.expiryDate == null}">—</div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="text-muted small">Причина инвалидности</div>
+            <div th:text="${child.disabilityInfo.cause} ?: '—'">—</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">Впервые установлена</div>
+            <div th:text="${child.disabilityInfo.isFirstTime} ? 'Да' : 'Нет'">Нет</div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <h5 class="mb-3">Реабилитационный потенциал и прогноз</h5>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="text-muted small">Реабилитационный потенциал</div>
+            <div th:text="${child.disabilityInfo.rehabPotential} ?: '—'">—</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">Реабилитационный прогноз</div>
+            <div th:text="${child.disabilityInfo.rehabPrognosis} ?: '—'">—</div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <div class="text-muted small">Нуждается в паллиативной помощи</div>
+        <div th:text="${child.disabilityInfo.isPalliative} ? 'Да' : 'Нет'">Нет</div>
+    </div>
+</div>
+<!-- БЛОК ДЛЯ ФОРМЫ (child-form.html) -->
+<div th:fragment="form-view">
+    <h5 class="mb-3">Основные сведения</h5>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label for="surname" class="form-label">Фамилия <span class="text-danger">*</span></label>
+            <input type="text" th:field="*{surname}" class="form-control" id="surname" required>
+        </div>
+        <div class="col-md-4">
+            <label for="name" class="form-label">Имя <span class="text-danger">*</span></label>
+            <input type="text" th:field="*{name}" class="form-control" id="name" required>
+        </div>
+        <div class="col-md-4">
+            <label for="patronymic" class="form-label">Отчество</label>
+            <input type="text" th:field="*{patronymic}" class="form-control" id="patronymic">
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label for="birthDate" class="form-label">Дата рождения</label>
+            <input type="date"
+                   th:name="birthDate"
+                   th:value="${child.birthDate != null ? #temporals.format(child.birthDate, 'yyyy-MM-dd') : ''}"
+                   class="form-control"
+                   id="birthDate">
+        </div>
+        <div class="col-md-4">
+            <label for="gender" class="form-label">Пол</label>
+            <select th:field="*{gender}" class="form-select" id="gender">
+                <option value="">Выберите пол</option>
+                <option value="МУЖ">Мужской</option>
+                <option value="ЖЕН">Женский</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="snils" class="form-label">СНИЛС</label>
+            <input type="text" th:field="*{snils}" class="form-control" id="snils">
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <h5 class="mb-3">Адресные данные</h5>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="actualAddress" class="form-label">Адрес фактического проживания</label>
+            <input type="text" th:field="*{actualAddress}" class="form-control" id="actualAddress">
+        </div>
+        <div class="col-md-6">
+            <label for="registrationAddress" class="form-label">Адрес регистрации</label>
+            <input type="text" th:field="*{registrationAddress}" class="form-control"
+                   id="registrationAddress">
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <h5 class="mb-3">Документ удостоверяющий личность</h5>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label for="docSeries" class="form-label">Серия документа</label>
+            <input type="text" th:field="*{docSeries}" class="form-control" id="docSeries">
+        </div>
+        <div class="col-md-4">
+            <label for="docNumber" class="form-label">Номер документа</label>
+            <input type="text" th:field="*{docNumber}" class="form-control" id="docNumber">
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <h5 class="mb-3">Законный представитель</h5>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="representativeFio" class="form-label">ФИО законного представителя</label>
+            <input type="text" th:field="*{representativeFio}" class="form-control"
+                   id="representativeFio">
+        </div>
+        <div class="col-md-3">
+            <label for="representativeRelation" class="form-label">Степень родства</label>
+            <input type="text" th:field="*{representativeRelation}" class="form-control"
+                   id="representativeRelation">
+        </div>
+        <div class="col-md-3">
+            <label for="representativePhone" class="form-label">Телефон</label>
+            <input type="text" th:field="*{representativePhone}" class="form-control"
+                   id="representativePhone">
+        </div>
+    </div>
+    <h5 class="mb-3">Сведения об инвалидности</h5>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label for="disabilityGroup" class="form-label">Группа инвалидности</label>
+            <input type="text" th:field="*{disabilityInfo.disabilityGroup}" class="form-control"
+                   id="disabilityGroup">
+        </div>
+        <div class="col-md-4">
+            <label for="establishmentDate" class="form-label">Дата установления</label>
+            <input type="date" th:field="*{disabilityInfo.establishmentDate}" class="form-control"
+                   id="establishmentDate">
+        </div>
+        <div class="col-md-4">
+            <label for="expiryDate" class="form-label">Срок окончания</label>
+            <input type="date" th:field="*{disabilityInfo.expiryDate}" class="form-control"
+                   id="expiryDate">
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="cause" class="form-label">Причина инвалидности</label>
+            <input type="text" th:field="*{disabilityInfo.cause}" class="form-control"
+                   id="cause">
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+            <div class="form-check mb-2">
+                <input type="checkbox" th:field="*{disabilityInfo.isFirstTime}"
+                       class="form-check-input" id="isFirstTime">
+                <label class="form-check-label" for="isFirstTime">Впервые установлена</label>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <h5 class="mb-3">Реабилитационный потенциал и прогноз</h5>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="rehabPotential" class="form-label">Реабилитационный потенциал</label>
+            <input type="text" th:field="*{disabilityInfo.rehabPotential}" class="form-control"
+                   id="rehabPotential">
+        </div>
+        <div class="col-md-6">
+            <label for="rehabPrognosis" class="form-label">Реабилитационный прогноз</label>
+            <input type="text" th:field="*{disabilityInfo.rehabPrognosis}" class="form-control"
+                   id="rehabPrognosis">
+        </div>
+    </div>
+
+    <div class="form-check mb-3">
+        <input type="checkbox" th:field="*{disabilityInfo.isPalliative}"
+               class="form-check-input" id="isPalliative">
+        <label class="form-check-label" for="isPalliative">Нуждается в паллиативной помощи</label>
+    </div>
+</div>
+</html>

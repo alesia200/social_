@@ -17,21 +17,18 @@ public class DisabilityInfo {
     @Column(name = "ID_disability_info")
     private Long id;
 
-    @NotBlank(message = "Укажите группу инвалидности")
-    @Pattern(regexp = "^(1|2|3|Ребенок-инвалид)$",
-            message = "Допустимые значения: 1, 2, 3 или Ребенок-инвалид")
+//    @Pattern(regexp = "^(1|2|3|Ребенок-инвалид)$",
+//            message = "Допустимые значения: 1, 2, 3 или Ребенок-инвалид")
     @Column(name = "disability_group", length = 50)
     private String disabilityGroup;
 
     @Column(name = "is_first_time")
     private Boolean isFirstTime;
 
-    @NotNull(message = "Укажите дату установления инвалидности")
     @PastOrPresent(message = "Дата установления не может быть в будущем")
     @Column(name = "establishment_date")
     private LocalDate establishmentDate;
 
-    @NotNull(message = "Укажите дату окончания инвалидности")
     @FutureOrPresent(message = "Дата окончания не может быть в прошлом")
     @Column(name = "expiry_date")
     private LocalDate expiryDate;
@@ -40,7 +37,6 @@ public class DisabilityInfo {
     @Column(name = "cause", length = 255)
     private String cause;
 
-    @Pattern(regexp = "^[\\d\\-]+$", message = "Номер ИПРА должен содержать только цифры и дефисы")
     @Size(max = 50, message = "Номер ИПРА не может превышать 50 символов")
     @Column(name = "ipra_number", length = 50)
     private String ipraNumber;
@@ -49,16 +45,13 @@ public class DisabilityInfo {
     @Column(name = "ipra_expiry_date")
     private LocalDate ipraExpiryDate;
 
-    // ═══════════════════════════════════════════════════
-    //  ИСПРАВЛЕНО: Официальная шкала МСЭ (Приказ Минтруда № 1024н)
-    // ═══════════════════════════════════════════════════
-    @Pattern(regexp = "^(I степень|II степень|III степень|IV степень|Не определена)$",
-            message = "Допустимые значения: I степень, II степень, III степень, IV степень, Не определена")
+//    @Pattern(regexp = "^(I степень|II степень|III степень|IV степень|Не определена)$",
+//            message = "Допустимые значения: I степень, II степень, III степень, IV степень, Не определена")
     @Column(name = "rehab_potential", length = 50)
     private String rehabPotential;
 
-    @Pattern(regexp = "^(Благоприятный|Относительно благоприятный|Неблагоприятный|Не определен)$",
-            message = "Допустимые значения: Благоприятный, Относительно благоприятный, Неблагоприятный, Не определен")
+//    @Pattern(regexp = "^(Благоприятный|Относительно благоприятный|Неблагоприятный|Не определен)$",
+//            message = "Допустимые значения: Благоприятный, Относительно благоприятный, Неблагоприятный, Не определен")
     @Column(name = "rehab_prognosis", length = 50)
     private String rehabPrognosis;
 

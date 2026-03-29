@@ -15,28 +15,23 @@ public class DiagnosticProtocol {
     @Column(name = "ID_protocol")
     private Long id;
 
-    @NotNull(message = "Укажите курс реабилитации")
     @ManyToOne
     @JoinColumn(name = "ID_rehab_course")
     private RehabilitationCourse rehabCourse;
 
-    @NotBlank(message = "Укажите тип диагностики")
     @Pattern(regexp = "^(primary|secondary)$",
             message = "Допустимые значения: primary (первичная) или secondary (повторная)")
     @Column(name = "diagnostic_type", length = 20)
     private String diagnosticType;
 
-    @NotNull(message = "Укажите дату проведения оценки")
     @PastOrPresent(message = "Дата оценки не может быть в будущем")
     @Column(name = "assessment_date")
     private LocalDate assessmentDate;
 
-    @NotNull(message = "Укажите общий балл")
     @Min(value = 0, message = "Общий балл не может быть отрицательным")
     @Column(name = "total_score")
     private Integer totalScore;
 
-    @NotNull(message = "Укажите процент эффективности")
     @Min(value = 0, message = "Процент эффективности не может быть отрицательным")
     @Max(value = 100, message = "Процент эффективности не может превышать 100")
     @Column(name = "effectiveness_percentage")

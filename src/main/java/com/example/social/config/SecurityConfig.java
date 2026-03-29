@@ -24,27 +24,21 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
+
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
-
-                        // Администратор
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-
-                        // Социальный работник
                         .requestMatchers("/social/**").hasRole("SOCIAL_WORKER")
                         .requestMatchers("/children/**").hasAnyRole("ADMIN", "SOCIAL_WORKER")
                         .requestMatchers("/sessions/**").hasAnyRole("ADMIN", "SOCIAL_WORKER")
-
-                        // Дефектолог
                         .requestMatchers("/defectologist/**").hasRole("DEFECTOLOGIST")
                         .requestMatchers("/children/**").hasAnyRole("ADMIN", "SOCIAL_WORKER", "DEFECTOLOGIST")
-
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .successHandler(successHandler)   // используем кастомный обработчик
+                        .successHandler(successHandler)
                         .permitAll()
                 )
                 .logout(logout -> logout

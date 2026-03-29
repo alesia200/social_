@@ -28,9 +28,6 @@ public class IcfCategory {
     private String name;
 
     // Флаги возрастных групп.
-    // Для справочника не ставим @NotNull, так как по умолчанию false — это нормально.
-    // Если по логике нужно ОБЯЗАТЕЛЬНО выбрать хотя бы одну группу,
-    // можно создать кастомную аннотацию @AtLeastOneAgeGroup, но обычно это не требуется.
     @Column(name = "is_age_0_3")
     private Boolean isAge03;
 

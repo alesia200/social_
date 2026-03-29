@@ -12,12 +12,10 @@ public class Limitation {
     @Column(name = "ID_limitation")
     private Long id;
 
-    @NotNull(message = "Укажите информацию об инвалидности")
     @ManyToOne
     @JoinColumn(name = "ID_disability_info")
     private DisabilityInfo disabilityInfo;
 
-    @NotBlank(message = "Укажите категорию ограничения")
     @Size(max = 255, message = "Категория не может превышать 255 символов")
     @Column(name = "category_name", length = 255)
     private String categoryName;
@@ -25,7 +23,7 @@ public class Limitation {
     // ═══════════════════════════════════════════════════
     //  Степень ограничения по критериям МСЭ: строго 1, 2 или 3
     // ═══════════════════════════════════════════════════
-    @NotNull(message = "Укажите степень ограничения")
+
     @Min(value = 1, message = "Степень ограничения не может быть меньше 1")
     @Max(value = 3, message = "Степень ограничения не может быть больше 3")
     @Column(name = "degree")
