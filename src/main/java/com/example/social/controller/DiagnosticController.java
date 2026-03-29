@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/courses/{courseId}/diagnostics")
@@ -19,12 +20,12 @@ public class DiagnosticController {
     }
 
     // Открытие формы первичной диагностики
-    // Сложная логика (создание 50 пустых строк МКФ) спрятана внутри diagnosticService.getOrCreatePrimaryProtocol()
     @GetMapping("/primary/edit")
     public String editPrimary(@PathVariable Long courseId, Model model) {
         DiagnosticProtocol protocol = diagnosticService.getOrCreateProtocol(courseId, "primary");
         model.addAttribute("protocol", protocol);
-        return "fragments/child/diagnostics :: form-view"; // Возвращаем фрагмент вкладки
+        // ИЗМЕНЕНО: Возвращаем полноценную страницу бланка, а не фрагмент вкладки
+        return "diagnostics/diagnostics-form";
     }
 
     // Открытие формы повторной диагностики
@@ -32,17 +33,24 @@ public class DiagnosticController {
     public String editSecondary(@PathVariable Long courseId, Model model) {
         DiagnosticProtocol protocol = diagnosticService.getOrCreateProtocol(courseId, "secondary");
         model.addAttribute("protocol", protocol);
-        return "fragments/child/diagnostics :: form-view";
+        return "diagnostics/diagnostics-form";
     }
 
     // Сохранение протокола со всеми оценками из таблицы
     @PostMapping("/save")
-    public String saveProtocol(@PathVariable Long courseId, DiagnosticProtocol protocol) {
+    public String saveProtocol(@PathVariable Long courseId,
+                               DiagnosticProtocol protocol,
+                               RedirectAttributes redirectAttributes) {
+
         // Spring сам соберет список assessments из таблицы благодаря th:field
         diagnosticService.save(protocol);
 
-        // Возвращаемся в профиль ребенка (в идеале - на вкладку диагностики, но пока просто в профиль)
-        Long childId = diagnosticService.findChildIdByCourseId(courseId);
-        return "redirect:/children/" + childId;
+        // ИЗМЕНЕНО: Добавляем сообщение об успехе
+        redirectAttributes.addFlashAttribute("successMessage", "Протокол успешно сохранен!");
+
+        // ИЗМЕНЕНО: Делаем редирект НА ЭТУ ЖЕ СТРАНИЦУ ПРОТОКОЛА (в ту же новую вкладку).
+        // protocol.getDiagnosticType() вернет "primary" или "secondary",
+        // поэтому пользователь останется на открытой вкладке с протоколом.
+        return "redirect:/courses/" + courseId + "/diagnostics/" + protocol.getDiagnosticType() + "/edit";
     }
 }

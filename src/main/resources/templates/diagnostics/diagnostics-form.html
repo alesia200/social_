@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layouts::head('Протокол оценки')}">
+    <style>
+        /* Стили только для бланка таблицы */
+        .protocol-table th, .protocol-table td {
+            border: 1px solid #000 !important;
+            vertical-align: middle;
+        }
+        .protocol-table th {
+            background-color: #f8f9fa;
+            font-size: 0.85rem;
+        }
+        .age-x {
+            color: #000;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/layouts::header}"></div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3 col-lg-2 p-0">
+            <div th:replace="~{fragments/layouts::sidebar}"></div>
+        </div>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-3">
+
+            <!-- Панель управления -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Протокол оценки эффективности</h4>
+                <div class="d-flex gap-2">
+                    <button type="submit" form="protocol-form" class="btn btn-success btn-sm">
+                        💾 Сохранить
+                    </button>
+                </div>
+            </div>
+
+            <!-- Вывод сообщения об успешном сохранении -->
+            <div class="alert alert-success" th:if="${successMessage}">
+                <span th:text="${successMessage}">Успех!</span>
+            </div>
+
+            <!-- Сам бланк протокола -->
+            <div class="card">
+                <div class="card-body">
+
+                    <h5 class="text-center mb-4">
+                        ПРОТОКОЛ ОЦЕНКИ ЭФФЕКТИВНОСТИ ПРОВЕДЕННОГО КУРСА<br>
+                        СОЦИАЛЬНО-ПСИХОЛОГИЧЕСКОЙ РЕАБИЛИТАЦИИ И АБИЛИТАЦИИ
+                    </h5>
+
+                    <!-- Шапка с данными -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <strong>Ребенок:</strong>
+                            <span th:text="${protocol.rehabCourse.child.surname} + ' ' + ${protocol.rehabCourse.child.name} + ' ' + ${protocol.rehabCourse.child.patronymic}">ФИО</span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Курс:</strong>
+                            № <span th:text="${protocol.rehabCourse.contractNumber}">---</span>
+                        </div>
+                    </div>
+
+                    <form th:action="@{/courses/{courseId}/diagnostics/save(courseId=${protocol.rehabCourse.id})}"
+                          th:object="${protocol}" method="post" id="protocol-form">
+
+                        <input type="hidden" th:field="*{id}" />
+                        <input type="hidden" th:field="*{diagnosticType}" />
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Тип диагностики</label>
+                                <input type="text" class="form-control" disabled
+                                       th:value="${protocol.diagnosticType == 'primary'} ? 'Первичная (входящая)' : 'Повторная (контрольная)'">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Дата оценки</label>
+                                <input type="date" th:field="*{assessmentDate}" class="form-control">
+                            </div>
+                        </div>
+
+                        <!-- Таблица МКФ -->
+                        <div class="table-responsive">
+                            <table class="table table-sm protocol-table">
+                                <thead>
+                                <tr class="text-center">
+                                    <th class="text-start" style="width: 35%">Категории МКФ</th>
+                                    <th style="width: 7%">0 - 3 г.</th>
+                                    <th style="width: 7%">4 - 7 л.</th>
+                                    <th style="width: 7%">8 - 11 л.</th>
+                                    <th style="width: 7%">12 - 17 л.</th>
+                                    <th style="width: 37%">
+                                        Результаты социально-психологической диагностики
+                                        <span th:text="${protocol.diagnosticType == 'primary'} ? '(первичной)' : '(повторной)'">(тип)</span>
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="assess, stat : *{assessments}">
+                                    <!-- Скрытые поля для привязки к БД -->
+                                    <input type="hidden" th:field="*{assessments[__${stat.index}__].id}" />
+                                    <input type="hidden" th:field="*{assessments[__${stat.index}__].icfCategory.id}" />
+
+                                    <!-- Код и название -->
+                                    <td class="text-start ps-2">
+                                        <strong th:text="${assess.icfCategory.codeMKF}">b117</strong><br>
+                                        <small th:text="${assess.icfCategory.name}">Наименование</small>
+                                    </td>
+
+                                    <!-- Возрастные флаги (X означает НЕ исследуется) -->
+                                    <td class="text-center">
+                                        <span th:unless="${assess.icfCategory.isAge03}" class="age-x">X</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span th:unless="${assess.icfCategory.isAge47}" class="age-x">X</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span th:unless="${assess.icfCategory.isAge811}" class="age-x">X</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span th:unless="${assess.icfCategory.isAge1217}" class="age-x">X</span>
+                                    </td>
+
+                                    <!-- Выбор балла -->
+                                    <td>
+                                        <select th:field="*{assessments[__${stat.index}__].score}" class="form-select form-select-sm">
+                                            <option value="">- Выберите -</option>
+                                            <option value="0">0 - Нет затруднений</option>
+                                            <option value="1">1 - Легкие затруднения</option>
+                                            <option value="2">2 - Умеренные затруднения</option>
+                                            <option value="3">3 - Тяжелые затруднения</option>
+                                            <option value="4">4 - Абсолютные затруднения</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-3 small text-muted">
+                            <i>Знак "X" в возрастных колонках означает, что параметр не исследуется в данном возрастном периоде.</i>
+                        </div>
+
+                        <!-- ========================================== -->
+                        <!-- ПЛАШКА РЕЗУЛЬТАТОВ (ТОЛЬКО ДЛЯ ПОВТОРНОЙ)  -->
+                        <!-- ========================================== -->
+                        <div th:if="${protocol.diagnosticType == 'secondary'}" class="mt-5">
+                            <h5 class="text-center mb-3">Результат</h5>
+                            <table class="table table-bordered protocol-table">
+                                <thead>
+                                <tr class="text-center">
+                                    <th style="width: 60%">
+                                        Количество исследуемых категорий МКФ, которым был присвоен балл от 4 до 1 в соответствии с возрастным периодом (a)
+                                    </th>
+                                    <th style="width: 10%">0 - 3 года</th>
+                                    <th style="width: 10%">4 - 7 лет</th>
+                                    <th style="width: 10%">8 - 11 лет</th>
+                                    <th style="width: 10%">12 - 17 лет</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr class="text-center align-middle">
+                                    <td class="fw-bold">Реабилитационный эффект (R)</td>
+                                    <td colspan="4">
+                                        R = <input type="number" name="rehabEffectNumerator" class="form-control form-control-sm d-inline-block mx-1" style="width: 60px;" placeholder="a">
+                                        /
+                                        <input type="number" name="rehabEffectDenominator" class="form-control form-control-sm d-inline-block mx-1" style="width: 60px;" placeholder="общ">
+                                        * 100% =
+                                        <input type="text" name="rehabEffectResult" class="form-control form-control-sm d-inline-block mx-1" style="width: 80px;" placeholder="%">
+                                    </td>
+                                </tr>
+                                <tr class="text-center align-middle">
+                                    <td>
+                                        Количество категорий МКФ, по которым наблюдается положительная динамика (b)
+                                    </td>
+                                    <td colspan="4">
+                                        <input type="number" name="positiveDynamicsCount" class="form-control form-control-sm d-inline-block" style="width: 80px;" placeholder="кол-во">
+                                    </td>
+                                </tr>
+                                </tbody>
+                                <tfoot>
+                                <tr class="text-center small">
+                                    <td>Общее количество категорий МКФ по услуге</td>
+                                    <td>34</td>
+                                    <td>41</td>
+                                    <td>51</td>
+                                    <td>54</td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+<div th:replace="~{fragments/layouts::footer}"></div>
+</body>
+</html>

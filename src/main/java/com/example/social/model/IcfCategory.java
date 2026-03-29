@@ -16,8 +16,6 @@ public class IcfCategory {
     private Long id;
 
     @NotBlank(message = "Код МКФ обязателен")
-    @Pattern(regexp = "^[bcdqs][1-9]\\d{0,2}(\\.\\d{1,2})?$",
-            message = "Неверный формат кода МКФ. Пример: b110, d450.1, s760")
     @Size(max = 10, message = "Код МКФ не может превышать 10 символов")
     @Column(name = "code_MKF", length = 10)
     private String codeMKF;

@@ -2,6 +2,7 @@ package com.example.social.config;
 
 import com.example.social.model.*;
 import com.example.social.repository.ChildRepository;
+import com.example.social.repository.IcfCategoryRepository;
 import com.example.social.repository.RehabilitationCourseRepository;
 import com.example.social.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,8 @@ public class DataInitializer implements CommandLineRunner {
     private ChildRepository childRepository;
     @Autowired
     private RehabilitationCourseRepository courseRepository;
+    @Autowired
+    private IcfCategoryRepository icfCategoryRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -59,6 +62,10 @@ public class DataInitializer implements CommandLineRunner {
             defectologist.setPatronymic("Владимировна");
             defectologist.setPosition("Дефектолог");
             userRepository.save(defectologist);
+        }
+        // === ИНИЦИАЛИЗАЦИЯ СПРАВОЧНИКА МКФ ===
+        if (icfCategoryRepository.count() == 0) {
+            initIcfCategories();
         }
         // === Инициализация детей и их курсов ===
         if (childRepository.count() == 0) {
@@ -182,5 +189,113 @@ public class DataInitializer implements CommandLineRunner {
             course3.setEffectivenessPercentage(null);
             courseRepository.save(course3);
         }
+
+    }
+    // ==========================================
+    // Вспомогательный метод для заполнения МКФ
+    // ==========================================
+    private void initIcfCategories() {
+        // Параметры: (Код, Название, 0-3, 4-7, 8-11, 12-17)
+        // true = исследуется, false = ставится "X" (не исследуется)
+
+        addCategory("d230", "Выполнение повседневного распорядка", true, true, true, true);
+        addCategory("d2301", "Организация повседневного распорядка", true, true, true, true);
+
+        addCategory("d410", "Изменение позы тела", true, true, true, true);
+        addCategory("d4100", "Изменение позы при положении лежа", true, true, true, true);
+        addCategory("d4103", "Изменение позы при положении сидя", true, true, true, true);
+        addCategory("d4104", "Изменение позы при положении стоя", true, true, true, true);
+        addCategory("d4105", "Наклон", true, true, true, true);
+
+        addCategory("d415", "Поддержание положения тела", true, true, true, true);
+        addCategory("d4150", "Нахождение в положении лежа", true, true, true, true);
+        addCategory("d4153", "Нахождение в положении сидя", true, true, true, true);
+        addCategory("d4154", "Нахождение в положении стоя", true, true, true, true);
+
+        addCategory("d420", "Перемещение тела", true, true, true, true);
+        addCategory("d4200", "Перемещение тела в положении сидя", true, true, true, true);
+        addCategory("d4201", "Перемещение тела в положении лежа", true, true, true, true);
+
+        addCategory("d430", "Поднятие и перенос объектов", true, true, true, true);
+        addCategory("d4300", "Поднятие", true, true, true, true);
+        addCategory("d4301", "Перенос кистями рук", true, true, true, true);
+        addCategory("d4302", "Перенос руками", true, true, true, true);
+        addCategory("d4303", "Перенос на плечах, бедрах и спине", false, false, false, true); // X для 0-3, 4-7, 8-11
+        addCategory("d4305", "Опускание объектов", true, true, true, true);
+
+        addCategory("d435", "Перемещение объектов ногами", true, true, true, true);
+        addCategory("d4350", "Толкание ногами", true, true, true, true);
+        addCategory("d4351", "Удар ногой", true, true, true, true);
+
+        addCategory("d440", "Использование точных движений кисти", true, true, true, true);
+        addCategory("d4400", "Подбирание", true, true, true, true);
+        addCategory("d4401", "Захват", true, true, true, true);
+        addCategory("d4402", "Манипулирование (пальцами и кистями рук)", true, true, true, true);
+        addCategory("d4403", "Отпускание", true, true, true, true);
+
+        addCategory("d445", "Использование кисти и руки", true, true, true, true);
+        addCategory("d4450", "Притягивание (объекта к себе)", true, true, true, true);
+        addCategory("d4451", "Отталкивание (объекта от себя)", true, true, true, true);
+        addCategory("d4452", "Вытягивание (рук, чтобы достать что-либо)", true, true, true, true);
+        addCategory("d4453", "Вращение или сгибание кистями или руками", true, true, true, true);
+        addCategory("d4454", "Бросание", true, true, true, true);
+        addCategory("d4455", "Хватание", true, true, true, true);
+
+        addCategory("d450", "Ходьба", true, true, true, true);
+        addCategory("d4500", "Ходьба на короткие расстояния (менее километра)...", true, true, true, true);
+
+        addCategory("d510", "Мытье", true, true, true, true);
+        addCategory("d5100", "Мытье частей тела", true, true, true, true);
+        addCategory("d5101", "Мытье всего тела", false, false, true, true); // X X
+        addCategory("d5102", "Вытирание и сушка", false, false, true, true); // X X
+
+        addCategory("d520", "Уход за частями тела", true, true, true, true);
+        addCategory("d5200", "Уход за кожей", false, false, true, true); // X X
+        addCategory("d5201", "Уход за полостью рта", false, true, true, true); // X
+        addCategory("d5202", "Уход за волосами", false, true, true, true); // X
+        addCategory("d5203", "Уход за ногтями на руках", false, false, true, true); // X X
+        addCategory("d5204", "Уход за ногтями на ногах", false, false, false, true); // X X X
+
+        addCategory("d530", "Физиологические отправления", true, true, true, true);
+        addCategory("d5300", "Регуляция мочеиспускания", true, true, true, true);
+        addCategory("d5301", "Регуляция дефекации", true, true, true, true);
+
+        addCategory("d540", "Одевание", true, true, true, true);
+        addCategory("d5400", "Надевание одежды", true, true, true, true);
+        addCategory("d5401", "Снятие одежды", true, true, true, true);
+        addCategory("d5402", "Надевание или снятие с нижних конечностей", false, true, true, true); // X
+        addCategory("d5403", "Снятие с нижних конечностей", true, true, true, true); // Без X по тексту
+        addCategory("d5404", "Выбор соответствующей одежды", false, true, true, true); // X
+
+        addCategory("d550", "Прием пищи", true, true, true, true);
+        addCategory("d560", "Питье", true, true, true, true);
+
+        addCategory("d570", "Забота о своем здоровье", true, true, true, true);
+        addCategory("d5701", "Соблюдение диеты и здорового образа жизни", false, false, true, true); // X X
+
+        addCategory("d620", "Приобретение товаров и услуг", true, true, true, true);
+        addCategory("d6200", "Осуществление покупок", false, false, true, true); // X X
+
+        addCategory("d630", "Приготовление пищи", true, true, true, true);
+        addCategory("d6300", "Приготовление простых блюд", false, true, true, true); // X
+        addCategory("d6301", "Приготовление сложных блюд", false, false, false, true); // X X X
+
+        addCategory("d640", "Выполнение работы по дому", true, true, true, true);
+        addCategory("d6400", "Стирка и сушка белья и одежды", false, false, true, true); // X X
+        addCategory("d6401", "Уборка на кухне и мытье посуды", false, false, true, true); // X X
+        addCategory("d6402", "Уборка жилой части", false, false, true, true); // X X
+        addCategory("d6403", "Использование бытовой техники", false, true, true, true); // X
+        addCategory("d6405", "Удаление мусора", false, false, true, true); // X X
+    }
+
+        private void addCategory(String code, String name, boolean isAge03, boolean isAge47, boolean isAge811, boolean isAge1217) {
+        IcfCategory category = new IcfCategory();
+        category.setCodeMKF(code);
+        category.setName(name);
+        category.setIsAge03(isAge03);
+        category.setIsAge47(isAge47);
+        category.setIsAge811(isAge811);
+        category.setIsAge1217(isAge1217);
+        icfCategoryRepository.save(category);
     }
 }
