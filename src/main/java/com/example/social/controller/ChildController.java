@@ -3,8 +3,10 @@ package com.example.social.controller;
 import com.example.social.model.Child;
 import com.example.social.model.DisabilityInfo;
 import com.example.social.service.ChildService;
+import com.example.social.service.RehabilitationCourseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,10 +15,12 @@ import org.springframework.web.bind.annotation.*;
 public class ChildController {
 
     private final ChildService childService;
+    private final RehabilitationCourseService courseService;
 
     @Autowired
-    public ChildController(ChildService childService) {
+    public ChildController(ChildService childService, RehabilitationCourseService courseService) {
         this.childService = childService;
+        this.courseService = courseService;
     }
 
     @GetMapping
@@ -26,9 +30,11 @@ public class ChildController {
     }
     //форма просмотра профиля ребенка
     @GetMapping("/{id}")
+    @Transactional
     public String showChildForm(@PathVariable Long id, Model model) {
         Child child = childService.findById(id);
         model.addAttribute("child", child);
+        model.addAttribute("activeCourse", courseService.getActiveCourse(child));
         return "children/child-profile";
     }
     //форма редактирования профиля ребенка

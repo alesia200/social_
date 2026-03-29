@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layouts::head('Профиль ребенка')}">
+<head th:replace="~{fragments/layouts::head('Редактирование профиля')}">
 <body>
 <div th:replace="~{fragments/layouts::header}"></div>
 <div class="container-fluid">
@@ -51,7 +51,7 @@
                             </div>
                         </div>
                     </div>
-                    <div>
+                    <div class="d-flex gap-2">
                         <!-- Кнопка отмены ведет либо к списку, либо к просмотру профиля -->
                         <a th:if="${child.id == null}" th:href="@{/children}"
                            class="btn btn-outline-secondary btn-sm">Отмена</a>
@@ -62,54 +62,20 @@
                 </div>
             </div>
 
-            <!-- Вкладки -->
-            <ul class="nav nav-tabs" id="childTabs" role="tablist">
-                <!-- Личные данные -->
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="personal-tab" data-bs-toggle="tab"
-                            data-bs-target="#personal" type="button" role="tab"
-                            aria-controls="personal" aria-selected="true">
-                        Личные данные
-                    </button>
-                </li>
-                <!-- Диагностика -->
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="diagnostics-tab" data-bs-toggle="tab"
-                            data-bs-target="#diagnostics" type="button" role="tab"
-                            aria-controls="diagnostics" aria-selected="false">
-                        Диагностика
-                    </button>
-                </li>
-                <!-- Расписание -->
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="schedule-tab" data-bs-toggle="tab"
-                            data-bs-target="#schedule" type="button" role="tab"
-                            aria-controls="schedule" aria-selected="false">
-                        Расписание
-                    </button>
-                </li>
-                <!-- Журнал занятий -->
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="class-journal" data-bs-toggle="tab"
-                            data-bs-target="#class-journal" type="button" role="tab"
-                            aria-controls="class-journal" aria-selected="false">
-                        Журнал занятий
-                    </button>
-                </li>
-            </ul>
-
-            <!-- Контент вкладок -->
+            <!-- Форма редактирования личных данных -->
             <form th:action="@{/children/save}" th:object="${child}" method="post" id="child-form">
                 <input type="hidden" th:field="*{id}"/>
                 <input type="hidden" th:field="*{disabilityInfo.id}"/>
-                <div class="tab-content p-3 border border-top-0 rounded-bottom" id="childTabsContent">
-                    <!-- Вкладка: Личные данные -->
-                    <div class="tab-pane fade show active" id="personal" role="tabpanel"
-                         aria-labelledby="personal-tab">
+
+                <!-- Оборачиваем содержимое в простую карточку вместо табов -->
+                <div class="card">
+                    <div class="card-body">
+                        <!-- Подключаем фрагмент с инпутами -->
                         <div th:replace="~{fragments/child/personal-data :: form-view}"></div>
                     </div>
                 </div>
             </form>
+
         </main>
     </div>
 </div>
