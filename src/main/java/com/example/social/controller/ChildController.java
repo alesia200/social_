@@ -2,9 +2,11 @@ package com.example.social.controller;
 
 import com.example.social.model.Child;
 import com.example.social.model.DisabilityInfo;
+import com.example.social.model.RehabilitationCourse; // ДОБАВЛЕН ИМПОРТ МОДЕЛИ КУРСА
 import com.example.social.service.ChildService;
 import com.example.social.service.RehabilitationCourseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize; // ДОБАВЛЕН ИМПОРТ БЕЗОПАСНОСТИ
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -28,6 +30,7 @@ public class ChildController {
         model.addAttribute("children", childService.findAll());
         return "children/child-list";
     }
+
     //форма просмотра профиля ребенка
     @GetMapping("/{id}")
     @Transactional
@@ -37,6 +40,7 @@ public class ChildController {
         model.addAttribute("activeCourse", courseService.getActiveCourse(child));
         return "children/child-profile";
     }
+
     //форма редактирования профиля ребенка
     @GetMapping("/edit/{id}")
     public String updateChildForm(@PathVariable Long id, Model model) {
@@ -44,17 +48,17 @@ public class ChildController {
         model.addAttribute("child", child);
         return "children/child-form";
     }
+
     //форма создания нового профиля ребенка
     @GetMapping("/create")
     public String createChildForm(Model model) {
         Child child = new Child();
-        // Инициализируем пустой объект, чтобы форма работала корректно
         model.addAttribute("child", child);
         return "children/child-form";
     }
+
     @PostMapping("/save")
     public String saveChild(Child child) {
-
         childService.save(child);
         return "redirect:/children";
     }
@@ -63,5 +67,35 @@ public class ChildController {
     public String deleteChild(@PathVariable("id") Long id) {
         childService.delete(id);
         return "redirect:/children";
+    }
+
+    // Форма создания расписания (откроется в новом окне)
+    @PreAuthorize("hasRole('SOCIAL_WORKER')") // Ограничили доступ для админа
+    @GetMapping("/{id}/schedule/new")
+    public String showCreateScheduleForm(@PathVariable Long id, Model model) {
+        Child child = childService.findById(id);
+        model.addAttribute("child", child);
+        return "children/schedule-form";
+    }
+
+    // Метод сохранения расписания (POST-запрос из новой формы)
+    @PreAuthorize("hasRole('SOCIAL_WORKER')")
+    @PostMapping("/{id}/schedule/save")
+    public String saveSchedule(@PathVariable Long id /* , @ModelAttribute ScheduleDto dto */) {
+        return "redirect:/children/" + id;
+    }
+
+    // Форма работы с журналом занятий (откроется в новом окне)
+    @PreAuthorize("hasAnyRole('SOCIAL_WORKER', 'DEFECTOLOGIST')") // Доступ соцработнику и дефектологу
+    @GetMapping("/{id}/journal/new")
+    public String showJournalForm(
+            @PathVariable Long id,
+            @RequestParam("courseId") Long courseId,
+            Model model) {
+
+        Child child = childService.findById(id);
+        model.addAttribute("child", child);
+        model.addAttribute("courseId", courseId);
+        return "children/journal-form";
     }
 }

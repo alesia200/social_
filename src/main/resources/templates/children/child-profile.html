@@ -74,7 +74,7 @@
                 </div>
                 <a th:href="@{/children/{childId}/courses/{courseId}/edit(childId=${child.id}, courseId=${activeCourse.id})}"
                    class="btn btn-sm btn-outline-dark"
-                   sec:authorize="hasAnyRole('ADMIN', 'SOCIAL_WORKER')">
+                   sec:authorize="hasAnyRole('ADMIN', 'SOCIAL_WORKER', 'DEFECTOLOGIST')">
                     Параметры курса
                 </a>
             </div>
@@ -119,15 +119,17 @@
                 </div>
 
                 <!-- Карточка: Расписание -->
-                <div class="col-md-4" sec:authorize="hasAnyRole('ADMIN', 'SOCIAL_WORKER')">
+                <div class="col-md-4" sec:authorize="hasAnyRole('SOCIAL_WORKER')">
                     <div class="card h-100 border-warning shadow-sm">
                         <div class="card-body d-flex flex-column text-center">
                             <h5 class="card-title text-warning">📅 Расписание занятий</h5>
                             <p class="card-text text-muted small flex-grow-1">
                                 Формирование индивидуального маршрута и распределение дефектологов.
                             </p>
-                            <a href="#" class="btn btn-outline-warning mt-2 disabled">
-                                Скоро
+                            <a th:href="@{/children/{id}/schedule/new(id=${child.id})}"
+                               target="_blank"
+                               class="btn btn-outline-warning mt-2">
+                                Открыть расписание
                             </a>
                             <!-- TODO: Здесь будет ссылка на расписание -->
                         </div>
@@ -137,15 +139,17 @@
 
             <!-- Карточка: Журнал занятий (выводим отдельно, так как дефектолог тоже должен иметь к ней доступ) -->
             <div class="row g-4 mb-4" th:if="${activeCourse != null}">
-                <div class="col-md-4" sec:authorize="hasAnyRole('ADMIN', 'SOCIAL_WORKER', 'DEFECTOLOGIST')">
+                <div class="col-md-4" sec:authorize="hasAnyRole('SOCIAL_WORKER', 'DEFECTOLOGIST')">
                     <div class="card h-100 border-info shadow-sm">
                         <div class="card-body d-flex flex-column text-center">
                             <h5 class="card-title text-info">📒 Журнал занятий</h5>
                             <p class="card-text text-muted small flex-grow-1">
                                 Просмотр и заполнение журнала посещаемости и результатов занятий.
                             </p>
-                            <a href="#" class="btn btn-outline-info mt-2 disabled">
-                                Скоро
+                            <a th:href="@{/children/{id}/journal/new(id=${child.id}, courseId=${activeCourse.id})}"
+                               target="_blank"
+                               class="btn btn-outline-info mt-2">
+                                Открыть журнал
                             </a>
                             <!-- TODO: Здесь будет ссылка на журнал -->
                         </div>

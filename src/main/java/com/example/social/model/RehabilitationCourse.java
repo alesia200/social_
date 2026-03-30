@@ -32,6 +32,17 @@ public class RehabilitationCourse {
     private LocalDate endDate;
 
 
+    @Column(name = "contract_date")
+    private LocalDate contractDate;
+
+    public LocalDate getContractDate() {
+        return contractDate;
+    }
+
+    public void setContractDate(LocalDate contractDate) {
+        this.contractDate = contractDate;
+    }
+
     @Size(max = 50, message = "Номер не может превышать 50 символов")
     @Column(name = "contract_number", length = 50)
     private String contractNumber;

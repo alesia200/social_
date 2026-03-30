@@ -104,6 +104,7 @@ public class DataInitializer implements CommandLineRunner {
             course1.setChild(child1);
             course1.setStartDate(LocalDate.of(2026, 3, 1));
             course1.setEndDate(LocalDate.of(2026, 5, 31));
+            course1.setContractDate(LocalDate.of(2026, 3, 14));
             course1.setContractNumber("Д-001");
             course1.setStatus("active");
             course1.setEffectivenessPercentage(null); // будет рассчитан позже
@@ -144,6 +145,7 @@ public class DataInitializer implements CommandLineRunner {
             course2.setChild(child2);
             course2.setStartDate(LocalDate.of(2026, 2, 1));
             course2.setEndDate(LocalDate.of(2026, 4, 30));
+            course2.setContractDate(LocalDate.of(2026, 3, 14));
             course2.setContractNumber("Д-002");
             course2.setStatus("active");
             course2.setEffectivenessPercentage(null);
@@ -184,6 +186,7 @@ public class DataInitializer implements CommandLineRunner {
             course3.setChild(child3);
             course3.setStartDate(LocalDate.of(2026, 2, 1));
             course3.setEndDate(LocalDate.of(2026, 4, 30));
+            course3.setContractDate(LocalDate.of(2026, 3, 14));
             course3.setContractNumber("Д-003");
             course3.setStatus("active");
             course3.setEffectivenessPercentage(null);

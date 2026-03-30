@@ -9,7 +9,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -30,7 +29,6 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/social/**").hasRole("SOCIAL_WORKER")
-                        .requestMatchers("/children/**").hasAnyRole("ADMIN", "SOCIAL_WORKER")
                         .requestMatchers("/sessions/**").hasAnyRole("ADMIN", "SOCIAL_WORKER")
                         .requestMatchers("/defectologist/**").hasRole("DEFECTOLOGIST")
                         .requestMatchers("/children/**").hasAnyRole("ADMIN", "SOCIAL_WORKER", "DEFECTOLOGIST")

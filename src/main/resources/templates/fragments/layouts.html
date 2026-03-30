@@ -85,28 +85,22 @@
             </li>
 
             <!-- Расписание (Все роли, но разный функционал внутри) -->
-            <li class="nav-item">
-                <a th:href="@{/schedule}" class="nav-link link-dark">
-                    <i class="bi bi-calendar-week me-2"></i> Расписание
+            <li class="nav-item" sec:authorize="!hasRole('ADMIN')">
+                <a class="nav-link" th:href="@{/schedule/...}">
+                    <i class="bi bi-calendar me-2"></i> Расписание
                 </a>
             </li>
-
             <!-- Раздел: Специфика ролей -->
 
             <!-- Диагностика (Для Дефектолога и Соц. работника) -->
-            <li class="nav-item" sec:authorize="hasAnyRole('DEFECTOLOGIST', 'SOCIAL_WORKER')">
-                <a th:href="@{/diagnostics}" class="nav-link link-dark">
-                    <i class="bi bi-clipboard-data me-2"></i> Диагностика
-                </a>
-            </li>
+
 
             <!-- Отчеты и Документы (Только Соц. работник) -->
-            <li class="nav-item mt-2" sec:authorize="hasAnyRole('SOCIAL_WORKER')">
-                <a th:href="@{/reports}" class="nav-link link-dark">
-                    <i class="bi bi-file-earmark-bar-graph me-2"></i> Отчеты и Документы
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center" th:href="@{/social/reports}">
+                    <i class="bi bi-file-earmark-bar-graph me-2"></i> Отчеты и документы
                 </a>
             </li>
-
         </ul>
     </div>
 </div>
