@@ -1,0 +1,48 @@
+<div th:fragment="attendance-result" xmlns:th="http://www.thymeleaf.org">
+    <div th:if="${results == null or results.empty}" class="alert alert-warning text-center border">
+        По выбранным фильтрам данных нет.
+    </div>
+    <div th:if="${results != null and !results.empty}" class="mb-3">
+        <div class="mb-3" style="height: 200px;">
+            <canvas id="attendanceChart"></canvas>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-hover">
+                <thead class="table-light">
+                <tr>
+                    <th>ФИО Ребенка</th>
+                    <th class="text-center">Всего</th>
+                    <th class="text-center text-success">Присутствовал</th>
+                    <th class="text-center text-danger">Пропустил</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="row : ${results}">
+                    <td th:text="${row.childName}">...</td>
+                    <td class="text-center" th:text="${row.totalLessons}">...</td>
+                    <td class="text-center text-success" th:text="${row.attended}">...</td>
+                    <td class="text-center text-danger" th:text="${row.missed}">...</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script th:inline="javascript">
+        if (document.getElementById('attendanceChart')) {
+            const labels = /*[[${results.![childName]}]]*/ [];
+            const attendedData = /*[[${results.![attended]}]]*/ [];
+            const missedData = /*[[${results.![missed]}]]*/ [];
+            new Chart(document.getElementById('attendanceChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Присутствовал', data: attendedData, backgroundColor: 'rgba(40, 167, 69, 0.6)', borderColor: 'rgba(40, 167, 69, 1)', borderWidth: 1 },
+                        { label: 'Пропустил', data: missedData, backgroundColor: 'rgba(220, 53, 69, 0.6)', borderColor: 'rgba(220, 53, 69, 1)', borderWidth: 1 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+        }
+    </script>
+</div>

@@ -1,0 +1,146 @@
+<!-- templates/children/fragments/documents.html -->
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content">
+
+    <div class="row g-4">
+
+        <!-- ИПРА -->
+        <div class="col-md-6">
+            <div class="doc-card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center justify-content-center rounded-3"
+                                 style="width:44px;height:44px;background:#eff6ff;">
+                                <i class="bi bi-file-earmark-check text-primary" style="font-size:20px;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-semibold" style="font-size:14px;">ИПРА</h6>
+                                <small class="text-muted">Индивидуальная программа реабилитации</small>
+                            </div>
+                        </div>
+                        <span th:if="${documents != null and !documents.isEmpty() and documents[0].ipraNumber != null}"
+                              class="badge-status badge-success-light">Загружен</span>
+                        <span th:unless="${documents != null and !documents.isEmpty() and documents[0].ipraNumber != null}"
+                              class="badge-status badge-warning-light">Не загружен</span>
+                    </div>
+
+                    <!-- Информация если есть -->
+                    <div th:if="${documents != null and !documents.isEmpty() and documents[0].ipraNumber != null}"
+                         class="mb-3 p-3 rounded" style="background:#f8fafc;">
+                        <table class="table table-sm table-borderless mb-0" style="font-size:13px;">
+                            <tr><td class="text-muted" style="width:40%;">Номер ИПРА</td>
+                                <td class="fw-medium" th:text="${documents[0].ipraNumber}">—</td></tr>
+                            <tr><td class="text-muted">Дата выдачи</td>
+                                <td class="fw-medium" th:text="${documents[0].ipraDate}">—</td></tr>
+                            <tr><td class="text-muted">Срок действия</td>
+                                <td class="fw-medium" th:text="${documents[0].ipraExpiry}">—</td></tr>
+                        </table>
+                    </div>
+
+                    <!-- Форма загрузки -->
+                    <form th:action="@{/children/{id}/documents/ipra(id=${childId})}" method="post"
+                          enctype="multipart/form-data">
+                        <div class="mb-2">
+                            <label class="form-label">Файл ИПРА</label>
+                            <input type="file" class="form-control form-control-sm" name="file">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Номер ИПРА</label>
+                            <input type="text" class="form-control form-control-sm" name="ipraNumber"
+                                   placeholder="Введите номер">
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Дата выдачи</label>
+                                <input type="date" class="form-control form-control-sm" name="ipraDate">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Срок действия</label>
+                                <input type="date" class="form-control form-control-sm" name="ipraExpiry">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="bi bi-upload me-1"></i> Загрузить ИПРА
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Справка МСЭ -->
+        <div class="col-md-6">
+            <div class="doc-card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center justify-content-center rounded-3"
+                                 style="width:44px;height:44px;background:#fffbeb;">
+                                <i class="bi bi-shield-check text-warning" style="font-size:20px;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-semibold" style="font-size:14px;">Справка МСЭ</h6>
+                                <small class="text-muted">Медико-социальная экспертиза</small>
+                            </div>
+                        </div>
+                        <span th:if="${documents != null and !documents.isEmpty() and documents[0].mseNumber != null}"
+                              class="badge-status badge-success-light">Загружена</span>
+                        <span th:unless="${documents != null and !documents.isEmpty() and documents[0].mseNumber != null}"
+                              class="badge-status badge-warning-light">Не загружена</span>
+                    </div>
+
+                    <div th:if="${documents != null and !documents.isEmpty() and documents[0].mseNumber != null}"
+                         class="mb-3 p-3 rounded" style="background:#f8fafc;">
+                        <table class="table table-sm table-borderless mb-0" style="font-size:13px;">
+                            <tr><td class="text-muted" style="width:40%;">Номер справки</td>
+                                <td class="fw-medium" th:text="${documents[0].mseNumber}">—</td></tr>
+                            <tr><td class="text-muted">Дата выдачи</td>
+                                <td class="fw-medium" th:text="${documents[0].mseDate}">—</td></tr>
+                            <tr><td class="text-muted">Группа инвалидности</td>
+                                <td class="fw-medium" th:text="${documents[0].disabilityGroup}">—</td></tr>
+                        </table>
+                    </div>
+
+                    <form th:action="@{/children/{id}/documents/mse(id=${childId})}" method="post"
+                          enctype="multipart/form-data">
+                        <div class="mb-2">
+                            <label class="form-label">Файл справки</label>
+                            <input type="file" class="form-control form-control-sm" name="file">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Номер справки</label>
+                            <input type="text" class="form-control form-control-sm" name="mseNumber"
+                                   placeholder="Введите номер">
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Дата выдачи</label>
+                                <input type="date" class="form-control form-control-sm" name="mseDate">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Группа инвалидности</label>
+                                <select class="form-select form-select-sm" name="disabilityGroup">
+                                    <option value="">—</option>
+                                    <option value="1">1 группа</option>
+                                    <option value="2">2 группа</option>
+                                    <option value="3">3 группа</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-warning btn-sm w-100">
+                            <i class="bi bi-upload me-1"></i> Загрузить справку
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

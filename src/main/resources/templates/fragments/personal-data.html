@@ -1,0 +1,136 @@
+<!-- templates/children/fragments/personal-data.html -->
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content">
+
+    <form th:action="@{/children/{id}/personal-data(id=${childId})}" method="post" id="personalForm">
+
+        <!-- Панель кнопок -->
+        <div class="d-flex justify-content-end mb-3">
+            <button type="button" id="editToggle" onclick="toggleEditMode()"
+                    class="btn btn-primary">
+                <i class="bi bi-pencil-square me-1"></i> Редактировать
+            </button>
+            <button type="submit" id="saveBtn" class="btn btn-success ms-2 d-none">
+                <i class="bi bi-check-lg me-1"></i> Сохранить
+            </button>
+            <button type="button" id="cancelBtn" onclick="toggleEditMode()"
+                    class="btn btn-outline-secondary ms-2 d-none">Отмена</button>
+        </div>
+
+        <!-- Данные ребёнка -->
+        <div class="card mb-3 border">
+            <div class="card-header bg-light py-2">
+                <h6 class="mb-0 fw-semibold" style="font-size:14px;">
+                    <i class="bi bi-person me-1 text-primary"></i> Данные ребёнка
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Фамилия</label>
+                        <input type="text" class="form-control form-control-sm" name="lastName"
+                               th:value="${child.lastName}" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Имя</label>
+                        <input type="text" class="form-control form-control-sm" name="firstName"
+                               th:value="${child.firstName}" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Отчество</label>
+                        <input type="text" class="form-control form-control-sm" name="middleName"
+                               th:value="${child.middleName}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Дата рождения</label>
+                        <input type="date" class="form-control form-control-sm" name="birthDate"
+                               th:value="${child.birthDate}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Пол</label>
+                        <select class="form-select form-select-sm" name="gender" disabled>
+                            <option value="male" th:selected="${child.gender == 'male'}">Мужской</option>
+                            <option value="female" th:selected="${child.gender == 'female'}">Женский</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Группа инвалидности</label>
+                        <select class="form-select form-select-sm" name="disabilityGroup" disabled>
+                            <option value="">—</option>
+                            <option value="1" th:selected="${child.disabilityGroup == '1'}">1 группа</option>
+                            <option value="2" th:selected="${child.disabilityGroup == '2'}">2 группа</option>
+                            <option value="3" th:selected="${child.disabilityGroup == '3'}">3 группа</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">СНИЛС</label>
+                        <input type="text" class="form-control form-control-sm" name="snils"
+                               th:value="${child.snils}" readonly>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Клинический диагноз</label>
+                        <input type="text" class="form-control form-control-sm" name="diagnosis"
+                               th:value="${child.diagnosis}" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Законный представитель -->
+        <div class="card mb-3 border">
+            <div class="card-header bg-light py-2">
+                <h6 class="mb-0 fw-semibold" style="font-size:14px;">
+                    <i class="bi bi-person-check me-1 text-warning"></i> Законный представитель
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">ФИО</label>
+                        <input type="text" class="form-control form-control-sm" name="parentFullName"
+                               th:value="${child.parentFullName}" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Телефон</label>
+                        <input type="tel" class="form-control form-control-sm" name="parentPhone"
+                               th:value="${child.parentPhone}" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Статус</label>
+                        <select class="form-select form-select-sm" name="parentStatus" disabled>
+                            <option value="mother" th:selected="${child.parentStatus == 'mother'}">Мать</option>
+                            <option value="father" th:selected="${child.parentStatus == 'father'}">Отец</option>
+                            <option value="guardian" th:selected="${child.parentStatus == 'guardian'}">Опекун</option>
+                            <option value="other" th:selected="${child.parentStatus == 'other'}">Другое</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+
+    <script>
+        function toggleEditMode() {
+            const fields = document.querySelectorAll('#personalForm input[readonly], #personalForm select[disabled]');
+            const editing = fields[0]?.readOnly === false;
+            fields.forEach(f => {
+                if (f.tagName === 'SELECT') {
+                    editing ? f.setAttribute('disabled', '') : f.removeAttribute('disabled');
+                } else {
+                    editing ? f.setAttribute('readonly', '') : f.removeAttribute('readonly');
+                }
+            });
+            document.getElementById('editToggle').classList.toggle('d-none', !editing);
+            document.getElementById('saveBtn').classList.toggle('d-none', editing);
+            document.getElementById('cancelBtn').classList.toggle('d-none', editing);
+        }
+    </script>
+
+</div>
+
+</body>
+</html>

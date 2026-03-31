@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layouts::head('Отчеты и документы')}">
+</head>
+<body>
+
+<!-- Библиотека графиков и jQuery -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<div th:replace="~{fragments/layouts::header}"></div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3 col-lg-2 p-0">
+            <div th:replace="~{fragments/layouts::sidebar}"></div>
+        </div>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-3">
+            <h4 class="mb-4">📊 Отчеты и документы</h4>
+
+            <div class="row g-4">
+
+                <!-- Блок 1: Посещаемость -->
+                <div class="col-md-6">
+                    <div class="card h-100 border-primary shadow-sm">
+                        <div class="card-header bg-primary text-white fw-bold">
+                            📋 Аналитика по посещаемости
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p class="card-text text-muted mb-3">
+                                Сводные данные по посещаемости всех детей за текущий период.
+                                Возможность фильтрации по курсам и специалистам.
+                            </p>
+
+                            <!-- Контейнер для результатов посещаемости -->
+                            <div id="attendanceResult">
+                                <!-- Начальное содержимое (если есть данные от сервера) -->
+                                <div th:if="${results == null}" class="alert alert-light text-center border">
+                                    <span class="text-muted fst-italic">Тут будет таблица посещаемости</span>
+                                </div>
+                                <div th:if="${results != null and results.empty}" class="alert alert-warning text-center border">
+                                    По выбранным фильтрам данных нет.
+                                </div>
+                                <div th:if="${results != null and !results.empty}" class="mb-3">
+                                    <div class="mb-3" style="height: 200px;">
+                                        <canvas id="attendanceChart"></canvas>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered table-hover">
+                                            <thead class="table-light">
+                                            <tr>
+                                                <th>ФИО Ребенка</th>
+                                                <th class="text-center">Всего</th>
+                                                <th class="text-center text-success">Присутствовал</th>
+                                                <th class="text-center text-danger">Пропустил</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr th:each="row : ${results}">
+                                                <td th:text="${row.childName}">Иванов И.И.</td>
+                                                <td class="text-center" th:text="${row.totalLessons}">10</td>
+                                                <td class="text-center text-success" th:text="${row.attended}">8</td>
+                                                <td class="text-center text-danger" th:text="${row.missed}">2</td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Форма посещаемости (AJAX) -->
+                            <form id="attendanceForm" class="d-flex align-items-end gap-2 mt-auto">
+                                <div class="flex-grow-1">
+                                    <label class="form-label small mb-0">Курс</label>
+                                    <select class="form-select form-select-sm" name="courseId">
+                                        <option value="">Все курсы</option>
+                                        <!-- динамические опции -->
+                                    </select>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <label class="form-label small mb-0">Специалист</label>
+                                    <select class="form-select form-select-sm" name="specialistId">
+                                        <option value="">Все специалисты</option>
+                                        <!-- динамические опции -->
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-outline-primary btn-sm">Сформировать</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm">Экспорт в Excel</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Блок 2: Эффективность -->
+                <div class="col-md-6">
+                    <div class="card h-100 border-success shadow-sm">
+                        <div class="card-header bg-success text-white fw-bold">
+                            📈 Статистика по эффективности
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p class="card-text text-muted mb-3">
+                                Анализ динамики развития детей по итогам первичной и повторной диагностики (сравнение баллов по МКФ).
+                            </p>
+
+                            <!-- Контейнер для результатов эффективности -->
+                            <div id="efficiencyResult">
+                                <div th:if="${effResults == null}" class="alert alert-light text-center border">
+                                    <span class="text-muted fst-italic">Нажмите "Сформировать" для анализа</span>
+                                </div>
+                                <div th:if="${effResults != null and !effResults.empty}" class="mb-3">
+                                    <div class="mb-3" style="height: 200px;">
+                                        <canvas id="effectivenessChart"></canvas>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered table-hover">
+                                            <thead class="table-light">
+                                            <tr>
+                                                <th>ФИО Ребенка</th>
+                                                <th class="text-center">Первичная (МКФ)</th>
+                                                <th class="text-center">Повторная (МКФ)</th>
+                                                <th class="text-center">Динамика</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr th:each="row : ${effResults}">
+                                                <td th:text="${row.childName}">Иванов И.И.</td>
+                                                <td class="text-center" th:text="${row.primaryScore}">30.5</td>
+                                                <td class="text-center" th:text="${row.secondaryScore}">55.0</td>
+                                                <td class="text-center fw-bold"
+                                                    th:text="${row.secondaryScore - row.primaryScore > 0} ? '+' + ${#numbers.formatDecimal(row.secondaryScore - row.primaryScore, 1, 1)} : ${#numbers.formatDecimal(row.secondaryScore - row.primaryScore, 1, 1)}"
+                                                    th:classappend="${row.secondaryScore - row.primaryScore > 0} ? 'text-success' : 'text-danger'">
+                                                    +24.5
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Форма эффективности (AJAX) -->
+                            <form id="efficiencyForm" class="d-flex gap-2 mt-auto">
+                                <button type="submit" class="btn btn-outline-success btn-sm fw-bold">Сформировать</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm">Экспорт в PDF</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- AJAX-скрипты -->
+<script>
+    $(document).ready(function() {
+        // Обработка формы посещаемости
+        $('#attendanceForm').on('submit', function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/social/reports/attendance',
+                type: 'GET',
+                data: $(this).serialize(),
+                success: function(html) {
+                    $('#attendanceResult').html(html);
+                    // После вставки нового HTML переинициализируем график (если есть)
+                    var canvas = document.getElementById('attendanceChart');
+                    if (canvas && window.Chart) {
+                        // Предполагаем, что во фрагменте есть скрипт, создающий график.
+                        // Простой способ: выполнить все скрипты из загруженного блока.
+                        var scripts = $('#attendanceResult').find('script');
+                        scripts.each(function() { eval($(this).html()); });
+                    }
+                },
+                error: function() {
+                    $('#attendanceResult').html('<div class="alert alert-danger">Ошибка загрузки данных</div>');
+                }
+            });
+        });
+
+        // Обработка формы эффективности
+        $('#efficiencyForm').on('submit', function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/social/reports/effectiveness',
+                type: 'GET',
+                success: function(html) {
+                    $('#efficiencyResult').html(html);
+                    var canvas = document.getElementById('effectivenessChart');
+                    if (canvas && window.Chart) {
+                        var scripts = $('#efficiencyResult').find('script');
+                        scripts.each(function() { eval($(this).html()); });
+                    }
+                },
+                error: function() {
+                    $('#efficiencyResult').html('<div class="alert alert-danger">Ошибка загрузки данных</div>');
+                }
+            });
+        });
+    });
+</script>
+
+<!-- Инициализация графиков при загрузке страницы (если данные уже есть) -->
+<script th:inline="javascript" th:if="${results != null and !results.empty}">
+    document.addEventListener("DOMContentLoaded", function() {
+        const labels = [];
+        const attendedData = [];
+        const missedData = [];
+        /*[# th:each="row : ${results}"]*/
+            labels.push(/*[[${row.childName}]]*/ '');
+            attendedData.push(/*[[${row.attended}]]*/ 0);
+            missedData.push(/*[[${row.missed}]]*/ 0);
+        /*[/]*/
+        const ctx = document.getElementById('attendanceChart');
+        if (ctx) {
+            new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: { labels: labels, datasets: [
+                    { label: 'Присутствовал', data: attendedData, backgroundColor: 'rgba(40, 167, 69, 0.6)', borderColor: 'rgba(40, 167, 69, 1)', borderWidth: 1 },
+                    { label: 'Пропустил', data: missedData, backgroundColor: 'rgba(220, 53, 69, 0.6)', borderColor: 'rgba(220, 53, 69, 1)', borderWidth: 1 }
+                ]},
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+        }
+    });
+</script>
+
+<script th:inline="javascript" th:if="${effResults != null and !effResults.empty}">
+    document.addEventListener("DOMContentLoaded", function() {
+        const labels = [];
+        const primaryData = [];
+        const secondaryData = [];
+
+        /*[# th:each="row : ${effResults}"]*/
+            labels.push(/*[[${row.childName}]]*/ '');
+            primaryData.push(/*[[${row.primaryScore}]]*/ 0);
+            secondaryData.push(/*[[${row.secondaryScore}]]*/ 0);
+        /*[/]*/
+
+        const ctx = document.getElementById('effectivenessChart');
+        if (ctx) {
+            new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Первичная (МКФ)', data: primaryData, backgroundColor: 'rgba(13, 110, 253, 0.6)', borderColor: 'rgba(13, 110, 253, 1)', borderWidth: 1 },
+                        { label: 'Повторная (МКФ)', data: secondaryData, backgroundColor: 'rgba(253, 126, 20, 0.6)', borderColor: 'rgba(253, 126, 20, 1)', borderWidth: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, suggestedMax: 100 }}
+                }
+            });
+        }
+    });
+</script>
+
+<div th:replace="~{fragments/layouts::footer}"></div>
+</body>
+</html>

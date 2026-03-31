@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layouts::head('Параметры курса')}">
+</head>
+<body>
+<div th:replace="~{fragments/layouts::header}"></div>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Сайдбар -->
+        <div class="col-md-3 col-lg-2 p-0">
+            <div th:replace="~{fragments/layouts::sidebar}"></div>
+        </div>
+
+        <!-- Основной контент -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-3">
+
+            <!-- Breadcrumbs -->
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/}">Главная</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/children}">Список детей</a></li>
+                    <li class="breadcrumb-item">
+                        <a th:href="@{/children/{id}(id=${child.id})}"
+                           th:text="${child.surname} + ' ' + ${child.name}">ФИО Ребенка</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">Параметры курса</li>
+                </ol>
+            </nav>
+
+            <!-- Заголовок -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h4 class="mb-1">📋 Параметры курса реабилитации</h4>
+                    <div class="text-muted" th:text="'Для ребенка: ' + ${child.surname + ' ' + child.name}"></div>
+                </div>
+            </div>
+
+            <!-- ФОРМА КУРСА -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form th:action="@{/children/{childId}/courses/{courseId}/save(childId=${child.id}, courseId=${course.id})}"
+                          th:object="${course}" method="post">
+
+                        <!-- Защита от 403 -->
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                        <div class="row g-3">
+                            <!-- Номер договора -->
+                            <div class="col-md-4">
+                                <label for="contractNumber" class="form-label">Номер договора</label>
+                                <input type="text" class="form-control" id="contractNumber" th:field="*{contractNumber}"
+                                       th:disabled="${!#authorization.expression('hasRole(''ROLE_SOCIAL_WORKER'')')}">
+                            </div>
+
+                            <!-- Дата договора -->
+                            <div class="col-md-4">
+                                <label for="contractDate" class="form-label">Дата договора</label>
+                                <input type="date" class="form-control" id="contractDate" th:field="*{contractDate}"
+                                       th:disabled="${!#authorization.expression('hasRole(''ROLE_SOCIAL_WORKER'')')}">
+                            </div>
+
+                            <!-- Статус курса -->
+                            <!-- Статус курса -->
+                            <div class="col-md-6">
+                                <label for="status" class="form-label">Статус</label>
+                                <select class="form-select" id="status" th:field="*{status}"
+                                        th:disabled="${!#authorization.expression('hasRole(''ROLE_SOCIAL_WORKER'')')}">
+                                    <option value="Активный">Активный</option>
+                                    <option value="Неактивный">Неактивный</option>
+                                </select>
+                            </div>
+
+                            <!-- Дата начала курса -->
+                            <div class="col-md-4">
+                                <label for="startDate" class="form-label">Дата начала курса</label>
+                                <input type="date" class="form-control" id="startDate" th:field="*{startDate}"
+                                       th:disabled="${!#authorization.expression('hasRole(''ROLE_SOCIAL_WORKER'')')}">
+                            </div>
+
+                            <!-- Дата окончания курса -->
+                            <div class="col-md-4">
+                                <label for="endDate" class="form-label">Дата окончания курса</label>
+                                <input type="date" class="form-control" id="endDate" th:field="*{endDate}"
+                                       th:disabled="${!#authorization.expression('hasRole(''ROLE_SOCIAL_WORKER'')')}">
+                            </div>
+                        </div>
+
+                        <!-- Кнопки управления -->
+                        <div class="d-flex gap-2 mt-4">
+                            <!-- Кнопка сохранения видна ТОЛЬКО соцработнику -->
+                            <button type="submit" class="btn btn-success"
+                                    sec:authorize="hasRole('SOCIAL_WORKER')">
+                                <i class="bi bi-check-circle me-1"></i> Сохранить изменения
+                            </button>
+
+                            <!-- Кнопка "Отмена" -->
+                            <a th:href="@{/children/{id}(id=${child.id})}" class="btn btn-outline-secondary">
+                                Вернуться в профиль
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Подсказка для Админа и Дефектолога -->
+            <div class="alert alert-warning mt-3" sec:authorize="!hasRole('SOCIAL_WORKER')">
+                <i class="bi bi-info-circle me-2"></i>У вас нет прав для редактирования параметров курса. Обратитесь к социальному работнику.
+            </div>
+
+        </main>
+    </div>
+</div>
+<div th:replace="~{fragments/layouts::footer}"></div>
+</body>
+</html>

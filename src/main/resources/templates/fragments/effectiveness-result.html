@@ -1,0 +1,51 @@
+<div th:fragment="effectiveness-result" xmlns:th="http://www.thymeleaf.org">
+    <div th:if="${effResults == null or effResults.empty}" class="alert alert-light text-center border">
+        <span class="text-muted fst-italic">Нажмите "Сформировать" для анализа</span>
+    </div>
+    <div th:if="${effResults != null and !effResults.empty}" class="mb-3">
+        <div class="mb-3" style="height: 200px;">
+            <canvas id="effectivenessChart"></canvas>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-hover">
+                <thead class="table-light">
+                <tr>
+                    <th>ФИО Ребенка</th>
+                    <th class="text-center">Первичная (МКФ)</th>
+                    <th class="text-center">Повторная (МКФ)</th>
+                    <th class="text-center">Динамика</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="row : ${effResults}">
+                    <td th:text="${row.childName}">...</td>
+                    <td class="text-center" th:text="${row.primaryScore}">...</td>
+                    <td class="text-center" th:text="${row.secondaryScore}">...</td>
+                    <td class="text-center fw-bold"
+                        th:text="${row.secondaryScore - row.primaryScore > 0} ? '+' + ${#numbers.formatDecimal(row.secondaryScore - row.primaryScore, 1, 1)} : ${#numbers.formatDecimal(row.secondaryScore - row.primaryScore, 1, 1)}"
+                        th:classappend="${row.secondaryScore - row.primaryScore > 0} ? 'text-success' : 'text-danger'">
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script th:inline="javascript">
+        if (document.getElementById('effectivenessChart')) {
+            const labels = /*[[${effResults.![childName]}]]*/ [];
+            const primaryData = /*[[${effResults.![primaryScore]}]]*/ [];
+            const secondaryData = /*[[${effResults.![secondaryScore]}]]*/ [];
+            new Chart(document.getElementById('effectivenessChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Первичная (МКФ)', data: primaryData, backgroundColor: 'rgba(13, 110, 253, 0.6)', borderColor: 'rgba(13, 110, 253, 1)', borderWidth: 1 },
+                        { label: 'Повторная (МКФ)', data: secondaryData, backgroundColor: 'rgba(253, 126, 20, 0.6)', borderColor: 'rgba(253, 126, 20, 1)', borderWidth: 1 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, suggestedMax: 100 } } }
+            });
+        }
+    </script>
+</div>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Журнал занятий</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Source Sans Pro', sans-serif; }
+        .screen-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+            color: #fff; padding: 15px 20px; margin-bottom: 20px;
+        }
+        .filter-card {
+            background: #fff; border-radius: 6px; padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.08); border: 1px solid #dee2e6;
+        }
+
+        /* ═══════════════════════════════════════
+           СТИЛИ ДОКУМЕНТА (A4, ГОСТ)
+           ═══════════════════════════════════════ */
+        .print-container {
+            background: #fff;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 20px auto;
+            padding: 15mm 15mm;
+            box-shadow: 0 4px 15px rgba(0,0,0,.1);
+            border-radius: 4px;
+            font-family: 'Times New Roman', Times, serif;
+            color: #000;
+            font-size: 11pt;
+            line-height: 1.3;
+        }
+
+        .doc-header { text-align: center; margin-bottom: 15pt; border-bottom: 2px solid #000; padding-bottom: 8pt; }
+        .doc-header h2 { font-size: 13pt; font-weight: 700; text-transform: uppercase; margin-bottom: 2pt; }
+        .doc-header p { font-size: 10pt; margin: 0; }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12pt; margin-bottom: 15pt; font-size: 11pt; }
+        .info-row { display: flex; }
+        .info-label { width: 130px; font-weight: 700; flex-shrink: 0; font-size: 10pt; }
+        .info-value { border-bottom: 1px dotted #000; flex-grow: 1; padding-left: 5pt; }
+
+        /* Статистика посещаемости */
+        .stats-row { display: flex; gap: 15pt; margin-bottom: 15pt; }
+        .stat-box {
+            border: 1px solid #000; padding: 5pt 12pt; border-radius: 3pt;
+            font-size: 10pt; text-align: center; background: #fafafa;
+        }
+        .stat-box strong { font-size: 14pt; display: block; }
+
+        /* Таблица журнала */
+        .journal-table { width: 100%; border-collapse: collapse; margin-bottom: 15pt; font-size: 9pt; }
+        .journal-table th, .journal-table td {
+            border: 1px solid #000; padding: 4pt 5pt; vertical-align: top;
+        }
+        .journal-table th {
+            background: #f0f0f0; font-weight: 700; font-size: 8pt; text-transform: uppercase;
+            text-align: center; vertical-align: middle;
+        }
+        .journal-table td.left { text-align: left; }
+        .journal-table td.center { text-align: center; vertical-align: middle; }
+
+        .t-attended { color: #155724; font-weight: 700; }
+        .t-missed { color: #721c24; font-style: italic; }
+
+        /* Подвал */
+        .sign-row { display: flex; justify-content: space-between; margin-top: 40pt; }
+        .sign-block { text-align: right; width: 45%; }
+        .sign-line { border-bottom: 1px solid #000; margin-bottom: 5pt; min-width: 180pt; margin-left: auto; }
+
+        /* ═══════════════════════════════════════
+           ПРАВИЛА ПЕЧАТИ
+           ═══════════════════════════════════════ */
+        @media print {
+            body { background: none !important; margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+            .print-container {
+                box-shadow: none !important; margin: 0 !important; padding: 10mm 15mm !important;
+                width: 100% !important; min-height: auto !important;
+            }
+            /* КРИТИЧНО ДЛЯ МНОГОСТРАНИЧНОГО ЖУРНАЛА:
+               Запрещаем разрывать строки и ВЫВОДИМ THEAD НА КАЖДОЙ СТРАНИЦЕ */
+            .journal-table tr { page-break-inside: avoid; }
+            .journal-table thead { display: table-header-group; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ════════════ ЭКРАННАЯ ПАНЕЛЬ ════════════ -->
+<div class="no-print screen-header d-flex align-items-center justify-content-between">
+    <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i> Журнал учета занятий</h5>
+    <a href="javascript:history.back()" class="btn btn-sm btn-light text-dark">
+        <i class="bi bi-arrow-left me-1"></i> Назад
+    </a>
+</div>
+
+<div class="no-print container mb-4">
+    <div class="filter-card">
+        <form th:action="@{/reports/class-journal/generate}" method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label form-label-sm">ID Ребенка</label>
+                <input type="number" name="childId" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label form-label-sm">Начало периода</label>
+                <input type="date" name="startDate" class="form-control form-control-sm" th:value="${startDate}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label form-label-sm">Конец периода</label>
+                <input type="date" name="endDate" class="form-control form-control-sm" th:value="${endDate}">
+            </div>
+            <div class="col-md-3 text-end">
+                <button type="submit" class="btn btn-primary btn-sm me-2">
+                    <i class="bi bi-arrow-repeat me-1"></i> Сформировать
+                </button>
+                <button type="button" onclick="window.print()" class="btn btn-success btn-sm" th:disabled="${rows == null}">
+                    <i class="bi bi-printer me-1"></i> Печать
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ════════════ ДОКУМЕНТ ════════════ -->
+<div class="print-container" th:if="${rows != null}">
+
+    <!-- Шапка документа -->
+    <div class="doc-header">
+        <h2>Журнал учета проведенных занятий</h2>
+        <p>ГБУ СО «Социально-административный Центр»</p>
+    </div>
+
+    <!-- Информация о ребёнке -->
+    <div class="info-grid">
+        <div class="info-row">
+            <div class="info-label">Пациент (ФИО):</div>
+            <div class="info-value" th:text="${childName}">Иванов Артём Сергеевич</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Год рождения:</div>
+            <div class="info-value" th:text="${childBirthYear}">2018</div>
+        </div>
+        <div class="info-row" style="grid-column: span 2;">
+            <div class="info-label">Клинический диагноз:</div>
+            <div class="info-value" th:text="${childDiagnosis}">F84.0 Синдром Аспергера</div>
+        </div>
+        <div class="info-row" style="grid-column: span 2;">
+            <div class="info-label">Период:</div>
+            <div class="info-value" th:text="${#temporals.format(startDate, 'dd.MM.yyyy')} + ' — ' + ${#temporals.format(endDate, 'dd.MM.yyyy')}">01.09.2023 — 30.12.2023</div>
+        </div>
+    </div>
+
+    <!-- Сводка посещаемости -->
+    <div class="stats-row">
+        <div class="stat-box">
+            <span class="lbl" style="font-size: 8pt; text-transform: uppercase; color: #555;">Всего занятий</span>
+            <strong th:text="${totalSessions}">24</strong>
+        </div>
+        <div class="stat-box">
+            <span class="lbl" style="font-size: 8pt; text-transform: uppercase; color: #155724;">Проведено</span>
+            <strong class="text-success" th:text="${completedSessions}">22</strong>
+        </div>
+        <div class="stat-box">
+            <span class="lbl" style="font-size: 8pt; text-transform: uppercase; color: #721c24;">Пропущено</span>
+            <strong class="text-danger" th:text="${totalSessions - completedSessions}">2</strong>
+        </div>
+        <div class="stat-box">
+            <span class="lbl" style="font-size: 8pt; text-transform: uppercase; color: #000;">Посещаемость</span>
+            <strong th:text="${attendancePercent} + '%'">91.6%</strong>
+        </div>
+    </div>
+
+    <!-- ═══════════ ОСНОВНАЯ ТАБЛИЦА ЖУРНАЛА ═══════════ -->
+    <table class="journal-table">
+        <thead>
+        <tr>
+            <th style="width: 3%;">№</th>
+            <th style="width: 8%;">Дата</th>
+            <th style="width: 6%;">Время</th>
+            <th style="width: 12%;">Направление</th>
+            <th style="width: 11%;">Специалист</th>
+            <th style="width: 5%;">Посещ.</th>
+            <th style="width: 17%;" class="left">Тема / Цели занятия</th>
+            <th style="width: 20%;" class="left">Заметки специалиста (Ход занятия)</th>
+            <th style="width: 18%;" class="left">Домашнее задание</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="row : ${rows}">
+            <!-- № -->
+            <td class="center" th:text="${row.rowNum}">1</td>
+
+            <!-- Дата -->
+            <td class="center" th:text="${row.sessionDate != null ? #temporals.format(row.sessionDate, 'dd.MM') : '—'}">12.09</td>
+
+            <!-- Время -->
+            <td class="center" th:text="${row.startTime != null ? #strings.substring(row.startTime, 0, 5) : '—'}">09:00</td>
+
+            <!-- Направление -->
+            <td class="center" th:text="${row.serviceDirection != null ? row.serviceDirection : '—'}">Логопедия</td>
+
+            <!-- Специалист -->
+            <td class="center" style="font-size: 8pt;" th:text="${row.specialistName != null ? row.specialistName : '—'}">Петрова И.В.</td>
+
+            <!-- Посещаемость -->
+            <td class="center">
+                        <span th:switch="${row.status}">
+                            <span th:case="'completed'" class="t-attended">+</span>
+                            <span th:case="'missed'" class="t-missed">нб</span>
+                            <span th:case="'cancelled'" style="color:#6c757d;">отм</span>
+                            <span th:case="*" style="color:#6c757d;">—</span>
+                        </span>
+            </td>
+
+            <!-- Тема (выравнивание по верхнему краю) -->
+            <td class="left" th:text="${row.topicTheme != null ? row.topicTheme : '—'}">Дыхательная гимнастика. Артикуляционный аппарат.</td>
+
+            <!-- Заметки -->
+            <td class="left" style="font-size: 8pt;" th:text="${row.specialistNotes != null ? row.specialistNotes : '—'}">Ребенок выполняет инструкции. Отмечается повышенный тонус мышц артикуляционного аппарата.</td>
+
+            <!-- Домашнее задание -->
+            <td class="left" style="font-size: 8pt;" th:text="${row.homework != null ? row.homework : '—'}">Массаж губ, выполнение упражнений перед зеркалом 2 раза в день по 5 минут.</td>
+        </tr>
+
+        <!-- Если данных нет -->
+        <tr th:if="${rows.isEmpty()}">
+            <td colspan="9" class="text-center py-3" style="font-size: 10pt;">
+                За указанный период занятий не проводилось
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Сноска -->
+    <div style="font-size: 8pt; color: #555; margin-bottom: 30pt;">
+        Обозначения посещаемости: <strong>+</strong> — присутствовал, <strong>нб</strong> — отсутствовал по болезни, <strong>отм</strong> — занятие отменено.
+    </div>
+
+    <!-- Подвал с подписями -->
+    <div class="sign-row">
+        <div class="sign-block">
+            <div class="sign-line"></div>
+            Специалист, проводивший занятия
+        </div>
+        <div class="sign-block">
+            <div class="sign-line"></div>
+            Заведующий отделением
+        </div>
+    </div>
+
+    <div style="margin-top: 20pt;">
+        <div class="sign-block" style="margin-left: auto; text-align: right;">
+            <div class="sign-line"></div>
+            Директор центра
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

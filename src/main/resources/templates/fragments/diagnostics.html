@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content">
+
+    <!-- Заголовок вкладки -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0 fw-semibold text-muted" style="font-size:13px;">
+            Протоколы диагностики ребёнка
+        </h6>
+        <div class="d-flex gap-2">
+            <a th:href="@{/children/{id}/diagnostics/new(id=${childId}, type='secondary')}"
+               class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-arrow-repeat me-1"></i> Повторная
+            </a>
+            <a th:href="@{/children/{id}/diagnostics/new(id=${childId}, type='primary')}"
+               class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i> Первичная диагностика
+            </a>
+        </div>
+    </div>
+
+    <!-- Пустое состояние -->
+    <div th:if="${protocols == null or protocols.isEmpty()}" class="empty-state">
+        <i class="bi bi-clipboard2 d-block"></i>
+        <h5>Нет протоколов диагностики</h5>
+        <p class="mb-3">Создайте первичный протокол для оценки базовых функций ребёнка по МКФ</p>
+        <a th:href="@{/children/{id}/diagnostics/new(id=${childId}, type='primary')}"
+           class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i> Создать первичный протокол
+        </a>
+    </div>
+
+    <!-- ═══════════ Список протоколов ═══════════ -->
+    <div th:if="${protocols != null and !protocols.isEmpty()}">
+        <div th:each="p : ${protocols}" class="card border mb-3">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-start justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div th:classappend="${p.diagnosticType == 'primary'} ? 'bg-primary bg-opacity-10' : 'bg-violet bg-opacity-10'"
+                             class="d-flex align-items-center justify-content-center rounded-3" style="width:44px;height:44px;">
+                            <i th:if="${p.diagnosticType == 'primary'}" class="bi bi-stethoscope text-primary" style="font-size:20px;"></i>
+                            <i th:unless="${p.diagnosticType == 'primary'}" class="bi bi-arrow-repeat" style="font-size:20px;color:#7c3aed;"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-semibold" style="font-size:14px;"
+                                th:text="${p.diagnosticType == 'primary'} ? 'Первичная диагностика' : 'Повторная диагностика'">Первичная</h6>
+                            <small class="text-muted" th:text="${#temporals.format(p.assessmentDate, 'dd.MM.yyyy')}">15.01.2024</small>
+                        </div>
+                    </div>
+                    <a th:href="@{/children/{id}/diagnostics/{pid}(id=${childId}, pid=${p.id})}" class="btn btn-outline-primary btn-sm">
+                        Открыть <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+
+                <!-- Метрики протокола -->
+                <div class="row g-2">
+                    <div class="col-4">
+                        <div class="p-2 rounded text-center" style="background:#f8fafc;">
+                            <small class="text-muted d-block" style="font-size:11px;">Общий балл</small>
+                            <strong th:text="${p.totalScore != null ? p.totalScore : '—'}">85</strong>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 rounded text-center" style="background:#f8fafc;">
+                            <small class="text-muted d-block" style="font-size:11px;">Эффективность (%)</small>
+                            <strong th:text="${p.effectivenessPercentage != null ? p.effectivenessPercentage + '%' : '—'}">60%</strong>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 rounded text-center" style="background:#f8fafc;">
+                            <small class="text-muted d-block" style="font-size:11px;">Оценок МКФ</small>
+                            <strong th:text="${p.assessments != null ? p.assessments.size() : 0}">12</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ МОДАЛКА: Создание/Редактирование ═══════════ -->
+    <div class="modal fade" id="diagnosticModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-clipboard2-pulse me-2 text-primary"></i>
+                        <span th:text="${type == 'primary'} ? 'Первичная диагностика' : 'Повторная диагностика'">Первичная</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form th:action="@{/children/{id}/diagnostics(id=${childId})}"
+                      method="post" th:object="${diagnosticProtocol}" id="diagForm">
+
+                    <div class="modal-body">
+                        <input type="hidden" th:field="*{diagnosticType}">
+
+                        <!-- Блок 1: Основная информация -->
+                        <h6 class="fw-semibold text-muted mb-3" style="font-size:12px; text-transform:uppercase; letter-spacing:0.05em;">
+                            <i class="bi bi-info-circle me-1"></i> Общая информация
+                        </h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Дата оценки <span class="text-danger">*</span></label>
+                                <input type="date" th:field="*{assessmentDate}"
+                                       th:class="${#fields.hasErrors('assessmentDate')} ? 'form-control form-control-sm is-invalid' : 'form-control form-control-sm'">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('assessmentDate')}" th:errors="*{assessmentDate}">Ошибка</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Курс реабилитации <span class="text-danger">*</span></label>
+                                <select th:field="*{rehabCourse.id}"
+                                        th:class="${#fields.hasErrors('rehabCourse')} ? 'form-select form-select-sm is-invalid' : 'form-select form-select-sm'">
+                                    <option value="">— Выберите курс —</option>
+                                    <!-- Здесь цикл по курсам, если передаются в модель -->
+                                </select>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('rehabCourse')}" th:errors="*{rehabCourse}">Ошибка</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Тип диагностики</label>
+                                <input type="text" readonly
+                                       th:value="${type == 'primary'} ? 'Первичная' : 'Повторная'"
+                                       class="form-control form-control-sm bg-light">
+                            </div>
+                        </div>
+
+                        <!-- Блок 2: Результаты -->
+                        <h6 class="fw-semibold text-muted mb-3" style="font-size:12px; text-transform:uppercase; letter-spacing:0.05em;">
+                            <i class="bi bi-bar-chart me-1"></i> Результаты
+                        </h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Общий балл <span class="text-danger">*</span></label>
+                                <input type="number" th:field="*{totalScore}" min="0"
+                                       th:class="${#fields.hasErrors('totalScore')} ? 'form-control form-control-sm is-invalid' : 'form-control form-control-sm'">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('totalScore')}" th:errors="*{totalScore}">Ошибка</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Эффективность (%) <span class="text-danger">*</span></label>
+                                <input type="number" th:field="*{effectivenessPercentage}" min="0" max="100" step="0.01"
+                                       th:class="${#fields.hasErrors('effectivenessPercentage')} ? 'form-control form-control-sm is-invalid' : 'form-control form-control-sm'">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('effectivenessPercentage')}" th:errors="*{effectivenessPercentage}">Ошибка</div>
+                            </div>
+                        </div>
+
+                        <!-- Блок 3: Оценки по МКФ (ICF) -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-semibold text-muted mb-0" style="font-size:12px; text-transform:uppercase; letter-spacing:0.05em;">
+                                <i class="bi bi-list-check me-1"></i> Оценки по МКФ
+                            </h6>
+                            <button type="button" class="btn btn-outline-success btn-sm py-0" onclick="addIcfRow()">
+                                <i class="bi bi-plus-circle me-1"></i> Добавить код
+                            </button>
+                        </div>
+
+                        <div class="table-responsive border rounded p-2 mb-4" style="background:#fafbfc;">
+                            <table class="table table-sm table-borderless mb-0" style="font-size:13px;" id="icfTable">
+                                <thead>
+                                <tr style="color:#64748b; font-size:11px; text-transform:uppercase;">
+                                    <th style="width:10%;">Код</th>
+                                    <th style="width:25%;">Категория</th>
+                                    <th style="width:15%;">Квал. 1</th>
+                                    <th style="width:15%;">Квал. 2</th>
+                                    <th>Описание</th>
+                                    <th style="width:5%;"></th>
+                                </tr>
+                                </thead>
+                                <tbody id="icfTableBody">
+                                <!-- Строки будут добавляться через JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Блок 4: Текстовые поля -->
+                        <div class="mb-3">
+                            <label class="form-label">Заключение</label>
+                            <textarea class="form-control form-control-sm" name="conclusion" rows="3"
+                                      placeholder="Общее заключение по результатам диагностики..."></textarea>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label">Рекомендации</label>
+                            <textarea class="form-control form-control-sm" name="recommendations" rows="3"
+                                      placeholder="Рекомендации по реабилитации..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer d-flex justify-content-between">
+                        <a th:href="@{/children/{id}/diagnostics(id=${childId})}"
+                           class="btn btn-outline-secondary btn-sm">Отмена</a>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-check-lg me-1"></i> Сохранить протокол
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ СКРИПТЫ ═══════════ -->
+    <script th:inline="javascript">
+        let icfRowIndex = 0;
+
+        // Функция добавления новой строки МКФ
+        function addIcfRow() {
+            const tbody = document.getElementById('icfTableBody');
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+                <td><input type="text" name="assessments[${icfRowIndex}].icfCode" class="form-control form-control-sm" placeholder="b110"></td>
+                <td><input type="text" name="assessments[${icfRowIndex}].categoryName" class="form-control form-control-sm" placeholder="Функции памяти"></td>
+                <td>
+                    <select name="assessments[${icfRowIndex}].qualifier1" class="form-select form-select-sm">
+                        <option value="">—</option>
+                        <option value="0">0 - Нет нарушений</option>
+                        <option value="1">1 - Лёгкие (до 25%)</option>
+                        <option value="2">2 - Умеренные (26-50%)</option>
+                        <option value="3">3 - Выраженные (51-95%)</option>
+                        <option value="4">4 - Тотальные (96-100%)</option>
+                        <option value="8">8 - Не указано</option>
+                    </select>
+                </td>
+                <td>
+                    <select name="assessments[${icfRowIndex}].qualifier2" class="form-select form-select-sm">
+                        <option value="">—</option>
+                        <option value="0">0 - Нет изменений</option>
+                        <option value="1">1 - Полное изменение</option>
+                        <option value="2">2 - Частичное</option>
+                        <option value="3">3 - Ухудшение</option>
+                        <option value="4">4 - Улучшение</option>
+                        <option value="8">8 - Не указано</option>
+                    </select>
+                </td>
+                <td><input type="text" name="assessments[${icfRowIndex}].description" class="form-control form-control-sm" placeholder="Комментарий"></td>
+                <td>
+                    <button type="button" class="btn btn-sm text-danger border-0 p-0" onclick="this.closest('tr').remove()">
+                        <i class="bi bi-trash" style="font-size:16px;"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            icfRowIndex++;
+        }
+
+        // Инициализация: открыть модалку и добавить одну пустую строку, если это открытие формы
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalEl = document.getElementById('diagnosticModal');
+
+            // Если есть ошибки валидации — автоматически открываем модалку
+            if ([[${#fields.hasErrors()}]]) {
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            }
+            // Если передан тип (открытие создания) — открываем и добавляем 1 строку
+            else if ([[${type != null}]]) {
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+                if(document.getElementById('icfTableBody').rows.length === 0) {
+                    addIcfRow();
+                }
+            }
+        });
+    </script>
+
+</div>
+
+</body>
+</html>

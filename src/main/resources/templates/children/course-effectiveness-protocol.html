@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заполнение: Протокол оценки эффективности</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        body.screen-mode { background-color: #f4f6f9; font-family: 'Source Sans Pro', sans-serif; }
+        .screen-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+            color: #fff; padding: 15px 20px; margin-bottom: 10px;
+        }
+
+        /* Подсказка для пользователя */
+        .user-hint {
+            background: #e7f5ff; border: 1px solid #b6d4fe; color: #034078;
+            padding: 10px 15px; border-radius: 5px; font-size: 14px;
+            margin-bottom: 15px; text-align: center;
+        }
+
+        /* ═══════════ СТИЛЬ ДОКУМЕНТА A4 ═══════════ */
+        .print-container {
+            background: #fff;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto 20px auto;
+            padding: 20mm 15mm;
+            box-shadow: 0 4px 15px rgba(0,0,0,.1);
+            border-radius: 4px;
+            font-family: 'Times New Roman', Times, serif;
+            color: #000;
+            font-size: 12pt;
+            line-height: 1.4;
+        }
+
+        .doc-header { text-align: center; margin-bottom: 20pt; border-bottom: 2px solid #000; padding-bottom: 10pt; }
+        .doc-header h2 { font-size: 13pt; font-weight: 700; text-transform: uppercase; margin-bottom: 3pt; }
+        .doc-header p { font-size: 10pt; margin: 0; }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15pt; margin-bottom: 20pt; font-size: 11pt; }
+        .info-row { display: flex; }
+        .info-label { width: 160px; font-weight: 700; flex-shrink: 0; }
+        .info-value {
+            border-bottom: 1px dotted #000;
+            flex-grow: 1;
+            padding-left: 5pt;
+            min-height: 1.2em; /* Чтобы пустое поле было кликабельным */
+        }
+
+        .section-title { font-size: 11pt; font-weight: 700; margin: 15pt 0 10pt 0; text-transform: uppercase; }
+
+        /* Текстовые блоки для ввода многострочного текста */
+        .text-block {
+            text-align: justify; font-size: 11pt; margin-bottom: 10pt; padding: 8pt;
+            background: #fafafa; border-left: 3px solid #ccc;
+            min-height: 60px; /* Важно: чтобы было легко кликнуть в пустую область */
+            word-wrap: break-word;
+        }
+
+        /* Таблица МКФ */
+        .icf-table { width: 100%; border-collapse: collapse; margin-bottom: 15pt; font-size: 10pt; }
+        .icf-table th, .icf-table td { border: 1px solid #000; padding: 5pt; text-align: center; vertical-align: middle; }
+        .icf-table th { background: #f0f0f0; font-weight: 700; font-size: 9pt; }
+        .icf-table td.left { text-align: left; }
+        /* Минимальная высота для пустых ячеек таблицы */
+        .icf-table td { min-height: 40px; }
+
+        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10pt; margin-bottom: 15pt; }
+        .summary-card { border: 1px solid #000; padding: 10pt; text-align: center; border-radius: 4pt; }
+        .summary-card .val { font-size: 20pt; font-weight: 700; display: block; min-height: 1.2em;}
+        .summary-card .lbl { font-size: 9pt; color: #555; text-transform: uppercase; }
+
+        .sign-row { display: flex; justify-content: space-between; margin-top: 50pt; }
+        .sign-block { text-align: right; width: 45%; }
+        .sign-line { border-bottom: 1px solid #000; margin-bottom: 5pt; min-width: 200pt; margin-left: auto; }
+
+        /* ═══════════════════════════════════════
+           МАГИЯ ЗАПОЛНЯЕМЫХ ПОЛЕЙ
+           ═══════════════════════════════════════ */
+        [contenteditable="true"] {
+            outline: none;
+            cursor: text;
+            transition: background 0.2s;
+        }
+
+        /* Подсветка при наведении и клике (ТОЛЬКО НА ЭКРАНЕ) */
+        .screen-mode [contenteditable="true"]:hover { background: #f8f9fa; }
+        .screen-mode [contenteditable="true"]:focus { background: #e7f5ff; }
+        .screen-mode .text-block:focus, .screen-mode .text-block:hover { background: #e9ecef !important; border-left-color: #3b82f6; }
+
+        /* ═══════════════════════════════════════
+           ПРАВИЛА ПЕЧАТИ
+           ═══════════════════════════════════════ */
+        @media print {
+            body { background: none !important; margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+            .print-container { box-shadow: none !important; margin: 0 !important; padding: 15mm !important; width: 100% !important; min-height: auto !important; }
+
+            /* Убираем подсветку полей при печати */
+            [contenteditable="true"]:hover,
+            [contenteditable="true"]:focus,
+            .text-block:hover,
+            .text-block:focus {
+                background: #fafafa !important; /* Возвращаем серый фон блоков, если он был */
+                border-left-color: #ccc !important;
+            }
+            /* Убираем подсветку у ячеек и инфо-полей */
+            .icf-table td:focus, .icf-table td:hover,
+            .info-value:focus, .info-value:hover,
+            .summary-card .val:focus, .summary-card .val:hover {
+                background: transparent !important;
+            }
+
+            .icf-table tr { page-break-inside: avoid; }
+            .icf-table thead { display: table-header-group; }
+        }
+    </style>
+</head>
+<body class="screen-mode">
+
+<!-- ════════════ ЭКРАННАЯ ПАНЕЛЬ ════════════ -->
+<div class="no-print screen-header d-flex align-items-center justify-content-between">
+    <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Заполнение: Протокол эффективности</h5>
+    <button type="button" onclick="window.print()" class="btn btn-success btn-sm">
+        <i class="bi bi-printer me-1"></i> Печать готового документа
+    </button>
+</div>
+
+<div class="no-print container">
+    <div class="user-hint">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Инструкция:</strong> Кликайте по пустым полям с пунктиром, ячейкам таблицы или серым блокам текста для заполнения. Цветная подсветка помогает увидеть активное поле — при печати она исчезнет.
+    </div>
+</div>
+
+<!-- ════════════ ДОКУМЕНТ ════════════ -->
+<div class="print-container">
+
+    <!-- Шапка -->
+    <div class="doc-header">
+        <h2>Протокол оценки эффективности<br>проведенного курса реабилитации</h2>
+        <p><span contenteditable="true">ГБУ СО «Социально-административный Центр»</span></p>
+    </div>
+
+    <!-- Раздел 1. Сведения о ребёнке -->
+    <div class="info-grid">
+        <div class="info-row">
+            <div class="info-label">Пациент (ФИО):</div>
+            <div class="info-value" contenteditable="true"></div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Дата рождения:</div>
+            <div class="info-value" contenteditable="true"></div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Группа инвалидности:</div>
+            <div class="info-value" contenteditable="true"></div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Клинический диагноз:</div>
+            <div class="info-value" contenteditable="true"></div>
+        </div>
+    </div>
+
+    <!-- Раздел 2. Сведения о курсе -->
+    <div class="section-title">1. Сведения о курсе реабилитации</div>
+    <div class="info-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+        <div class="info-row">
+            <div class="info-label">Период:</div>
+            <div class="info-value" contenteditable="true"></div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Направления:</div>
+            <div class="info-value" contenteditable="true"></div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Специалисты:</div>
+            <div class="info-value" contenteditable="true"></div>
+        </div>
+    </div>
+
+    <!-- Раздел 3. Цели -->
+    <div class="section-title">2. Цели курса реабилитации</div>
+    <div class="text-block" contenteditable="true"></div>
+
+    <!-- Раздел 4. Сравнительная таблица МКФ -->
+    <div class="section-title">3. Сравнительный анализ по МКФ (Международная классификация функционирования)</div>
+    <table class="icf-table">
+        <thead>
+        <tr>
+            <th style="width:8%;">Код</th>
+            <th style="width:25%;" class="left">Наименование категории</th>
+            <th style="width:12%;">Балл на начало</th>
+            <th style="width:12%;">Балл на конец</th>
+            <th style="width:13%;">Динамика</th>
+            <th style="width:30%;" class="left">Комментарий специалиста</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- 6 пустых строк для заполнения вручную -->
+        <tr>
+            <td contenteditable="true"></td>
+            <td class="left" contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td class="left" contenteditable="true"></td>
+        </tr>
+        <tr>
+            <td contenteditable="true"></td>
+            <td class="left" contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td class="left" contenteditable="true"></td>
+        </tr>
+        <tr>
+            <td contenteditable="true"></td>
+            <td class="left" contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td class="left" contenteditable="true"></td>
+        </tr>
+        <tr>
+            <td contenteditable="true"></td>
+            <td class="left" contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td class="left" contenteditable="true"></td>
+        </tr>
+        <tr>
+            <td contenteditable="true"></td>
+            <td class="left" contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td class="left" contenteditable="true"></td>
+        </tr>
+        <tr>
+            <td contenteditable="true"></td>
+            <td class="left" contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td class="left" contenteditable="true"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Раздел 5. Итоговые показатели -->
+    <div class="section-title">4. Итоговые показатели эффективности</div>
+    <div class="summary-grid">
+        <div class="summary-card">
+            <span class="lbl">Начальный балл</span>
+            <span class="val" contenteditable="true"></span>
+        </div>
+        <div class="summary-card">
+            <span class="lbl">Итоговый балл</span>
+            <span class="val" contenteditable="true"></span>
+        </div>
+        <div class="summary-card">
+            <span class="lbl">Эффективность курса</span>
+            <span class="val" contenteditable="true"></span>
+        </div>
+    </div>
+
+    <!-- Раздел 6. Заключение -->
+    <div class="section-title">5. Заключение</div>
+    <div class="text-block" contenteditable="true"></div>
+
+    <!-- Раздел 7. Рекомендации -->
+    <div class="section-title">6. Рекомендации</div>
+    <div class="text-block" contenteditable="true"></div>
+
+    <!-- Подвал с подписями -->
+    <div class="sign-row">
+        <div class="sign-block">
+            <div class="sign-line"></div>
+            Специалист (и): ______________________
+        </div>
+        <div class="sign-block">
+            <div class="sign-line"></div>
+            Заведующий отделением: ______________________
+        </div>
+    </div>
+
+    <div style="margin-top: 15pt; font-size: 10pt;">
+        <div class="sign-block" style="margin-left: auto; text-align: right;">
+            <div class="sign-line"></div>
+            Директор центра: ______________________
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
