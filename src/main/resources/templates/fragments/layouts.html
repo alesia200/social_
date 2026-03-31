@@ -84,10 +84,21 @@
                 </a>
             </li>
 
-            <!-- Расписание (Все роли, но разный функционал внутри) -->
-            <li class="nav-item" sec:authorize="!hasRole('ADMIN')">
-                <a class="nav-link" th:href="@{/schedule/...}">
+            <!-- Расписание (Только Соц. работник) -->
+            <!-- Расписание (Для Соцработника и Дефектолога) -->
+            <li class="nav-item">
+                <!-- Ссылка для Соцработника (видит всех) -->
+                <a class="nav-link link-dark"
+                   th:if="${#authorization.expression('hasRole(''ROLE_SOCIAL_WORKER'')')}"
+                   th:href="@{/schedule}">
                     <i class="bi bi-calendar me-2"></i> Расписание
+                </a>
+
+                <!-- Ссылка для Дефектолога (видит только свое) -->
+                <a class="nav-link link-dark"
+                   th:if="${#authorization.expression('hasRole(''ROLE_DEFECTOLOGIST'')')}"
+                   th:href="@{/defectologist/schedule}">
+                    <i class="bi bi-calendar me-2"></i> Мое расписание
                 </a>
             </li>
             <!-- Раздел: Специфика ролей -->
@@ -98,7 +109,7 @@
             <!-- Отчеты и Документы (Только Соц. работник) -->
             <li class="nav-item">
                 <a class="nav-link d-flex align-items-center" th:href="@{/social/reports}">
-                    <i class="bi bi-file-earmark-bar-graph me-2"></i> Отчеты и документы
+                    <i class="bi bi-file-earmark-bar-graph me-2"></i> Аналитика
                 </a>
             </li>
         </ul>

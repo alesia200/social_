@@ -1,14 +1,15 @@
 package com.example.social.controller;
 
-import com.example.social.model.AttendanceFilterDto;
 import com.example.social.model.AttendanceRecordDto;
 import com.example.social.model.EffectivenessRecordDto;
+import com.example.social.model.AttendanceFilterDto;
+import com.example.social.service.ChildService;
+import com.example.social.service.ScheduleService;
+import com.example.social.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,21 +18,17 @@ import java.util.List;
 @RequestMapping("/social")
 public class SocialWorkerController {
 
-    // ИЗМЕНЕНО: Добавлен Model для передачи расписания
+    @Autowired
+    private ChildService childService;
+
+    @Autowired
+    private ScheduleService scheduleService;
+
+    @Autowired
+    private UserService userService;
+
     @GetMapping("/dashboard")
-    public String dashboard(Model model) {
-
-        // ==========================================
-        // ВРЕМЕННАЯ ЗАГЛУШКА ДЛЯ РАСПИСАНИЯ
-        // ==========================================
-        // Позже здесь вы вызовете ваш сервис:
-        // model.addAttribute("schedules", scheduleService.findAllSchedules());
-
-        List<String> schedules = new ArrayList<>();
-        schedules.add("Тестовая запись: расписание пока загружается...");
-        model.addAttribute("schedules", schedules);
-        // ==========================================
-
+    public String dashboard() {
         return "dashboard";
     }
 
@@ -42,12 +39,12 @@ public class SocialWorkerController {
         return "social/reports";
     }
 
-    // ОБРАБОТКА КНОПКИ "СФОРМИРОВАТЬ" (Посещаемость)
-    @PostMapping("/reports/attendance")
-    public String generateAttendanceReport(@ModelAttribute("filter") AttendanceFilterDto filter, Model model) {
-
-        model.addAttribute("filter", filter);
-
+    // AJAX: получение фрагмента с отчетом по посещаемости (GET)
+    @GetMapping("/reports/attendance")
+    public String getAttendanceFragment(@RequestParam(required = false) Long courseId,
+                                        @RequestParam(required = false) Long specialistId,
+                                        Model model) {
+        // Заглушка – замените на реальные данные из сервиса
         List<AttendanceRecordDto> results = new ArrayList<>();
         results.add(new AttendanceRecordDto("Иванов Иван", 10, 8, 2));
         results.add(new AttendanceRecordDto("Петров Петр", 10, 10, 0));
@@ -55,17 +52,12 @@ public class SocialWorkerController {
         results.add(new AttendanceRecordDto("Смирнова Анна", 10, 9, 1));
 
         model.addAttribute("results", results);
-        return "social/reports";
+        return "social/fragments/child/attendance-result";
     }
 
-    // ОБРАБОТКА КНОПКИ "СФОРМИРОВАТЬ" (Эффективность по МКФ)
-    @PostMapping("/reports/effectiveness")
-    public String generateEffectivenessReport(Model model) {
-
-        if (!model.containsAttribute("filter")) {
-            model.addAttribute("filter", new AttendanceFilterDto());
-        }
-
+    // AJAX: получение фрагмента с отчетом по эффективности (GET)
+    @GetMapping("/reports/effectiveness")
+    public String getEffectivenessFragment(Model model) {
         List<EffectivenessRecordDto> effResults = new ArrayList<>();
         effResults.add(new EffectivenessRecordDto("Иванов Иван", 30.5, 55.0));
         effResults.add(new EffectivenessRecordDto("Петров Петр", 45.0, 48.2));
@@ -73,6 +65,6 @@ public class SocialWorkerController {
         effResults.add(new EffectivenessRecordDto("Смирнова Анна", 50.0, 52.0));
 
         model.addAttribute("effResults", effResults);
-        return "social/reports";
+        return "social/fragments/child/effectiveness-result";
     }
 }

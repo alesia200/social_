@@ -5,6 +5,8 @@ import com.example.social.model.DisabilityInfo;
 import com.example.social.model.RehabilitationCourse; // ДОБАВЛЕН ИМПОРТ МОДЕЛИ КУРСА
 import com.example.social.service.ChildService;
 import com.example.social.service.RehabilitationCourseService;
+import com.example.social.service.ScheduleService;
+import com.example.social.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize; // ДОБАВЛЕН ИМПОРТ БЕЗОПАСНОСТИ
 import org.springframework.stereotype.Controller;
@@ -12,17 +14,23 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/children")
 public class ChildController {
 
     private final ChildService childService;
     private final RehabilitationCourseService courseService;
+    private final ScheduleService scheduleService;
+    private final UserService userService;
 
     @Autowired
-    public ChildController(ChildService childService, RehabilitationCourseService courseService) {
+    public ChildController(ChildService childService, RehabilitationCourseService courseService, ScheduleService scheduleService, UserService userService) {
         this.childService = childService;
         this.courseService = courseService;
+        this.scheduleService = scheduleService;
+        this.userService = userService;
     }
 
     @GetMapping
@@ -70,20 +78,21 @@ public class ChildController {
     }
 
     // Форма создания расписания (откроется в новом окне)
-    @PreAuthorize("hasRole('SOCIAL_WORKER')") // Ограничили доступ для админа
-    @GetMapping("/{id}/schedule/new")
-    public String showCreateScheduleForm(@PathVariable Long id, Model model) {
-        Child child = childService.findById(id);
-        model.addAttribute("child", child);
-        return "children/schedule-form";
-    }
-
-    // Метод сохранения расписания (POST-запрос из новой формы)
-    @PreAuthorize("hasRole('SOCIAL_WORKER')")
-    @PostMapping("/{id}/schedule/save")
-    public String saveSchedule(@PathVariable Long id /* , @ModelAttribute ScheduleDto dto */) {
-        return "redirect:/children/" + id;
-    }
+//    @PreAuthorize("hasRole('SOCIAL_WORKER')") // Ограничили доступ для админа
+//    @GetMapping("/{id}/schedule")
+//    public String showCreateScheduleForm(@PathVariable Long id, Model model) {
+//        Child child = childService.findById(id);
+//        model.addAttribute("child", child);
+//        model.addAttribute("schedules", List.of()); // пустой список, чтобы избежать ошибки
+//        return "children/schedule-form";
+//    }
+//
+//    // Метод сохранения расписания (POST-запрос из новой формы)
+//    @PreAuthorize("hasRole('SOCIAL_WORKER')")
+//    @PostMapping("/{id}/schedule/save")
+//    public String saveSchedule(@PathVariable Long id /* , @ModelAttribute ScheduleDto dto */) {
+//        return "redirect:/children/" + id;
+//    }
 
     // Форма работы с журналом занятий (откроется в новом окне)
     @PreAuthorize("hasAnyRole('SOCIAL_WORKER', 'DEFECTOLOGIST')") // Доступ соцработнику и дефектологу
