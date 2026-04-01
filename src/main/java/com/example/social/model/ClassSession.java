@@ -14,30 +14,24 @@ public class ClassSession {
     @Column(name = "ID_session")
     private Long id;
 
-
     @ManyToOne
     @JoinColumn(name = "ID_service_plan")
     private ServicePlan servicePlan;
-
 
     @ManyToOne
     @JoinColumn(name = "ID_child")
     private Child child;
 
-
     @ManyToOne
     @JoinColumn(name = "ID_specialist")
     private User defectologist;
-
 
     @PastOrPresent(message = "Дата не может быть в будущем")
     @Column(name = "session_date")
     private LocalDate sessionDate;
 
-
     @Column(name = "start_time")
     private LocalTime startTime;
-
 
     @Pattern(regexp = "^(planned|completed|missed|cancelled)$",
             message = "Допустимые статусы: planned, completed, missed, cancelled")

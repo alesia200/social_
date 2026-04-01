@@ -4,7 +4,7 @@ import com.example.social.model.ClassSession;
 import com.example.social.repository.ClassSessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -26,7 +26,9 @@ public class ClassSessionService {
     public ClassSession findById(Long id) {
         return classSessionRepository.findById(id).orElse(null);
     }
-
+    public List<ClassSession> findByChildIdAndDateBetween(Long childId, LocalDate startDate, LocalDate endDate) {
+        return classSessionRepository.findByChildIdAndSessionDateBetween(childId, startDate, endDate);
+    }
     // Сохранить/обновить занятие
     public void save(ClassSession classSession) {
         classSessionRepository.save(classSession);

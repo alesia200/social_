@@ -52,7 +52,7 @@ public class SocialWorkerController {
         results.add(new AttendanceRecordDto("Смирнова Анна", 10, 9, 1));
 
         model.addAttribute("results", results);
-        return "social/fragments/child/attendance-result";
+        return "templates/fragments/child/attendance-result.html";
     }
 
     // AJAX: получение фрагмента с отчетом по эффективности (GET)
@@ -65,6 +65,6 @@ public class SocialWorkerController {
         effResults.add(new EffectivenessRecordDto("Смирнова Анна", 50.0, 52.0));
 
         model.addAttribute("effResults", effResults);
-        return "social/fragments/child/effectiveness-result";
+        return "templates/fragments/child/attendance-result.html";
     }
 }
